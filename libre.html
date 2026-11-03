@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoboTester</title>
+<style>
+:root{
+  --bg:#f4f5f7;--card:#fff;--fg:#1d2330;--muted:#677084;--line:#dde1e8;
+  --acc:#1f6feb;--ok:#1a7f37;--bad:#cf222e;--warn:#bf8700;--in:#fff;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1218;--card:#171b23;--fg:#e6e9ef;--muted:#9099ab;--line:#2a303c;
+  --acc:#4c8dff;--ok:#3fb950;--bad:#f85149;--warn:#d29922;--in:#0f1218;}}
+:root[data-theme="dark"]{--bg:#0f1218;--card:#171b23;--fg:#e6e9ef;--muted:#9099ab;--line:#2a303c;--acc:#4c8dff;--ok:#3fb950;--bad:#f85149;--warn:#d29922;--in:#0f1218;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+header h1{font-size:17px;margin:0 12px 0 0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block}
+.dot.on{background:var(--ok)}
+main{padding:16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));max-width:1400px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h2{font-size:15px;margin:0 0 2px}
+.card p.d{margin:0 0 10px;color:var(--muted);font-size:12px}
+.wide{grid-column:1/-1}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+label{color:var(--muted);font-size:12px}
+input,select{background:var(--in);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit}
+input.pin{width:48px}
+input[type=range]{flex:1;min-width:120px;padding:0}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button.stop{background:var(--bad)}
+button:disabled{opacity:.45;cursor:default}
+.val{font:600 22px ui-monospace,Menlo,Consolas,monospace;min-width:70px}
+.ch{display:grid;grid-template-columns:110px 90px 1fr 28px;gap:8px;align-items:center;border-top:1px solid var(--line);padding:6px 0}
+.ch canvas{width:100%;height:40px}
+.ch .n{font-weight:600}
+pre#log{height:220px;overflow:auto;background:var(--in);border:1px solid var(--line);border-radius:6px;padding:8px;margin:6px 0 0;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+.tx{color:var(--acc)} .er{color:var(--bad)} .okc{color:var(--ok)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:260px}
+#warn{display:none;background:var(--warn);color:#000;padding:8px 16px}
+.spacer{flex:1}
+@media(max-width:520px){.ch{grid-template-columns:80px 70px 1fr 28px}}
+</style>
+</head>
+<body>
+<div id="warn">Este navegador no soporta Web Serial. Usa <b>Chrome</b> o <b>Edge</b> en PC (abre el archivo directamente).</div>
+<header>
+  <h1>🤖 RoboTester</h1>
+  <span class="dot" id="dot"></span><span id="st">Desconectado</span>
+  <select id="baud"><option>9600</option><option>115200</option></select>
+  <button id="btnCon">Conectar</button>
+  <button class="stop" id="btnStop">■ PARAR TODO</button>
+  <span class="spacer"></span>
+  <label>Proyecto/alumno</label>
+  <input id="profName" list="profList" placeholder="Ej: Grupo 3 - Seguidor" style="width:180px">
+  <datalist id="profList"></datalist>
+  <button class="sec" id="profLoad">Cargar</button>
+  <button class="sec" id="profSave">Guardar pines</button>
+</header>
+
+<main>
+  <!-- MONITOR -->
+  <section class="card wide">
+    <div class="row"><h2 style="margin-right:auto">📈 Monitor en vivo</h2>
+      <label>cada</label><select id="rate"><option>50</option><option selected>100</option><option>250</option><option>500</option><option>1000</option></select><label>ms</label>
+      <button class="sec" id="scanA">Leer A0–A5</button>
+      <button class="sec" id="rec">● Grabar CSV</button>
+      <button class="sec" id="clearW">Limpiar</button>
+    </div>
+    <div id="chans"><p class="d" id="noch">Pulsa “Monitorear” en cualquier sensor para verlo aquí.</p></div>
+  </section>
+
+  <!-- SALIDA DIGITAL -->
+  <section class="card">
+    <h2>💡 Salida digital</h2><p class="d">LED, relé, láser, módulo de luz…</p>
+    <div class="row"><label>Pin</label><input class="pin" id="doPin" value="13" data-save></div>
+    <div class="row">
+      <button data-cmd="doOn">Encender</button><button class="sec" data-cmd="doOff">Apagar</button>
+      <button class="sec" id="blink">Parpadear</button>
+    </div>
+  </section>
+
+  <!-- PWM -->
+  <section class="card">
+    <h2>🌗 PWM</h2><p class="d">Brillo de LED, LED RGB, ventilador con transistor (pines ~3,5,6,9,10,11 en UNO)</p>
+    <div class="row"><label>Pin</label><input class="pin" id="pwmPin" value="9" data-save></div>
+    <div class="row"><input type="range" id="pwmVal" min="0" max="255" value="0"><span class="val" id="pwmOut">0</span></div>
+  </section>
+
+  <!-- ANALÓGICO -->
+  <section class="card">
+    <h2>🎛️ Sensor analógico</h2><p class="d">Potenciómetro, LDR, humedad de suelo, MQ-2, joystick, sensor de línea analógico</p>
+    <div class="row"><label>Pin</label><input class="pin" id="anPin" value="A0" data-save>
+      <button class="sec" id="anRead">Leer</button><button id="anWatch">Monitorear</button></div>
+    <div class="row"><span class="val" id="anOut">—</span><label>(0–1023)</label></div>
+  </section>
+
+  <!-- DIGITAL IN -->
+  <section class="card">
+    <h2>🔘 Sensor digital</h2><p class="d">Botón, PIR, IR de obstáculo, final de carrera, sensor de línea digital</p>
+    <div class="row"><label>Pin</label><input class="pin" id="diPin" value="2" data-save>
+      <label><input type="checkbox" id="diPull" data-save> Pull-up (botón a GND)</label></div>
+    <div class="row"><button class="sec" id="diRead">Leer</button><button id="diWatch">Monitorear</button>
+      <span class="val" id="diOut">—</span></div>
+  </section>
+
+  <!-- ULTRASONIDO -->
+  <section class="card">
+    <h2>📏 Ultrasonido HC-SR04</h2><p class="d">Distancia en cm (-1 = sin eco / mal cableado)</p>
+    <div class="row"><label>Trig</label><input class="pin" id="usTrig" value="7" data-save>
+      <label>Echo</label><input class="pin" id="usEcho" value="8" data-save></div>
+    <div class="row"><button class="sec" id="usRead">Medir</button><button id="usWatch">Monitorear</button>
+      <span class="val" id="usOut">—</span><label>cm</label></div>
+  </section>
+
+  <!-- SERVO -->
+  <section class="card">
+    <h2>🦾 Servo</h2><p class="d">SG90, MG996R… (alimenta servos grandes aparte, GND común)</p>
+    <div class="row"><label>Pin</label><input class="pin" id="svPin" value="6" data-save></div>
+    <div class="row"><input type="range" id="svVal" min="0" max="180" value="90"><span class="val" id="svOut">90°</span></div>
+    <div class="row"><button class="sec" data-sv="0">0°</button><button class="sec" data-sv="90">90°</button><button class="sec" data-sv="180">180°</button>
+      <button id="svSweep">Barrido</button><button class="sec" id="svOff">Soltar</button></div>
+  </section>
+
+  <!-- MOTORES -->
+  <section class="card">
+    <h2>⚙️ Motores DC (L298N / L293D / TB6612)</h2><p class="d">EN = “-” si el jumper ENA/ENB está puesto</p>
+    <div class="row"><b style="width:20px">A</b><label>IN1</label><input class="pin" id="mA1" value="4" data-save><label>IN2</label><input class="pin" id="mA2" value="5" data-save><label>EN</label><input class="pin" id="mAe" value="3" data-save></div>
+    <div class="row"><b style="width:20px">B</b><label>IN3</label><input class="pin" id="mB1" value="12" data-save><label>IN4</label><input class="pin" id="mB2" value="13" data-save><label>EN</label><input class="pin" id="mBe" value="11" data-save></div>
+    <div class="row"><label>Velocidad</label><input type="range" id="mSpd" min="60" max="255" value="180"><span id="mSpdOut">180</span></div>
+    <div class="pad">
+      <span></span><button data-drv="1,1">▲ Avanzar</button><span></span>
+      <button data-drv="-1,1">◀ Izq</button><button class="stop" data-drv="0,0">■</button><button data-drv="1,-1">Der ▶</button>
+      <span></span><button data-drv="-1,-1">▼ Atrás</button><span></span>
+    </div>
+    <div class="row"><button class="sec" data-drv="1,0">Solo A</button><button class="sec" data-drv="0,1">Solo B</button>
+      <label><input type="checkbox" id="mHold" data-save> Mover solo mientras presiono</label></div>
+  </section>
+
+  <!-- BUZZER -->
+  <section class="card">
+    <h2>🔊 Buzzer pasivo</h2><p class="d">Tonos y melodía de prueba</p>
+    <div class="row"><label>Pin</label><input class="pin" id="bzPin" value="10" data-save>
+      <label>Hz</label><input id="bzF" value="1000" style="width:70px"></div>
+    <div class="row"><button id="bzTone">Tono 0,5 s</button><button class="sec" id="bzMel">Melodía</button></div>
+  </section>
+
+  <!-- CONSOLA -->
+  <section class="card wide">
+    <h2>⌨️ Consola</h2><p class="d">Comandos: PING · DW 13 1 · PWM 9 128 · AR A0 · DR 2 · US 7 8 · SERVO 6 90 · MOTOR 4 5 3 200 · TONE 10 440 300 · STOP</p>
+    <div class="row"><input id="cmd" style="flex:1" placeholder="Escribe un comando y Enter"><button id="send">Enviar</button>
+      <label><input type="checkbox" id="hideStream" checked> ocultar datos del monitor</label><button class="sec" id="clrLog">Borrar</button></div>
+    <pre id="log"></pre>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let port, writer, reader, readClosed, writeClosed;
+const chans = new Map();   // key -> {vals[], el, canvas, out}
+let recording = null;      // [{t,key,v}]
+
+if (!('serial' in navigator)) $('warn').style.display = 'block';
+
+// ---------- log ----------
+function log(txt, cls = '') {
+  const l = $('log'), s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = txt + '\n';
+  l.appendChild(s);
+  while (l.childNodes.length > 400) l.removeChild(l.firstChild);
+  l.scrollTop = l.scrollHeight;
+}
+
+// ---------- serial ----------
+async function connect() {
+  if (port) return disconnect();
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: +$('baud').value });
+    const enc = new TextEncoderStream();
+    writeClosed = enc.readable.pipeTo(port.writable);
+    writer = enc.writable.getWriter();
+    const dec = new TextDecoderStream();
+    readClosed = port.readable.pipeTo(dec.writable);
+    reader = dec.readable.getReader();
+    setStatus(true, 'Conectado (esperando placa…)');
+    readLoop();
+    setTimeout(() => { send('PING'); send('RATE ' + $('rate').value); }, 2000); // UNO se reinicia al conectar
+  } catch (e) { log('Error: ' + e.message, 'er'); port = null; }
+}
+async function disconnect() {
+  try { await send('STOP'); } catch {}
+  try { reader.cancel(); await readClosed.catch(() => {}); } catch {}
+  try { writer.close(); await writeClosed; } catch {}
+  try { await port.close(); } catch {}
+  port = null; setStatus(false, 'Desconectado');
+}
+function setStatus(on, t) { $('dot').classList.toggle('on', on); $('st').textContent = t; $('btnCon').textContent = on ? 'Desconectar' : 'Conectar'; }
+
+async function readLoop() {
+  let buf = '';
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) { handleLine(buf.slice(0, i).trim()); buf = buf.slice(i + 1); }
+    }
+  } catch (e) { log('Lectura detenida: ' + e.message, 'er'); }
+  finally { try { reader.releaseLock(); } catch {} }
+}
+
+async function send(c) {
+  if (!writer) { log('⚠ No conectado', 'er'); return; }
+  await writer.write(c + '\n');
+  if (!(/^(PWM|SERVO|MOTOR)/.test(c) && $('hideStream').checked)) log('> ' + c, 'tx');
+}
+
+// ---------- respuestas ----------
+function handleLine(l) {
+  if (!l) return;
+  const p = l.split(/\s+/);
+  if ((p[0] === 'A' || p[0] === 'D' || p[0] === 'U') && p.length >= 3) {
+    const v = parseFloat(p[2]);
+    updateOut(p[0], p[1], v);
+    const key = p[0] + ' ' + p[1];
+    if (chans.has(key)) pushVal(key, v);
+    if (recording) recording.push([Date.now(), key, v]);
+    if (!$('hideStream').checked) log(l);
+    return;
+  }
+  if (p[0] === 'READY' || p[0] === 'PONG') setStatus(true, 'Conectado ✔ ' + (p[0] === 'READY' ? l.slice(6) : ''));
+  log(l, p[0] === 'ERR' ? 'er' : (p[0] === 'OK' ? 'okc' : ''));
+}
+function updateOut(t, pin, v) {
+  if (t === 'A' && pin.toUpperCase() === $('anPin').value.toUpperCase()) $('anOut').textContent = v;
+  if (t === 'D' && pin === $('diPin').value) $('diOut').textContent = v ? 'ALTO (1)' : 'BAJO (0)';
+  if (t === 'U' && pin === $('usTrig').value) $('usOut').textContent = v < 0 ? 'sin eco' : v.toFixed(1);
+}
+
+// ---------- monitor ----------
+async function watch(type, pin, pin2 = '') {
+  const key = type + ' ' + pin;
+  if (!chans.has(key)) addChan(key, type);
+  await send(`WATCH ${type} ${pin} ${pin2}`.trim());
+}
+function addChan(key, type) {
+  $('noch').style.display = 'none';
+  const d = document.createElement('div'); d.className = 'ch';
+  const names = { A: 'Analógico', D: 'Digital', U: 'Distancia' };
+  d.innerHTML = `<div><div class="n">${key.split(' ')[1]}</div><label>${names[type]}</label></div><span class="val">—</span><canvas></canvas><button class="sec" title="quitar">✕</button>`;
+  $('chans').appendChild(d);
+  const c = { vals: [], el: d, canvas: d.querySelector('canvas'), out: d.querySelector('.val'), type };
+  d.querySelector('button').onclick = () => { chans.delete(key); d.remove(); resync(); };
+  chans.set(key, c);
+}
+async function resync() {  // el firmware no borra canales sueltos: se reenvía la lista
+  await send('UNWATCH');
+  for (const k of chans.keys()) {
+    const [t, pin] = k.split(' ');
+    await send(`WATCH ${t} ${pin}` + (t === 'U' ? ' ' + $('usEcho').value : ''));
+  }
+  if (!chans.size) $('noch').style.display = '';
+}
+function pushVal(key, v) {
+  const c = chans.get(key);
+  c.vals.push(v); if (c.vals.length > 200) c.vals.shift();
+  c.out.textContent = c.type === 'U' ? (v < 0 ? '—' : v.toFixed(1)) : v;
+  c.dirty = true;
+}
+function draw() {
+  const col = getComputedStyle(document.documentElement).getPropertyValue('--acc');
+  for (const c of chans.values()) {
+    if (!c.dirty) continue; c.dirty = false;
+    const cv = c.canvas, w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1;
+    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const vs = c.vals.filter(v => v >= 0);
+    let lo = c.type === 'A' ? 0 : Math.min(...vs, 0), hi = c.type === 'A' ? 1023 : c.type === 'D' ? 1 : Math.max(...vs, 10);
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath();
+    c.vals.forEach((v, i) => {
+      const x = i / 199 * w, y = h - 3 - (Math.max(v, lo) - lo) / (hi - lo || 1) * (h - 6);
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    });
+    g.stroke();
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// ---------- controles ----------
+$('btnCon').onclick = connect;
+$('btnStop').onclick = async () => {
+  clearInterval(blinkT); blinkT = null; $('blink').textContent = 'Parpadear';
+  clearInterval(sweepT); sweepT = null; $('svSweep').textContent = 'Barrido';
+  await send('STOP');
+  chans.clear(); $('chans').querySelectorAll('.ch').forEach(e => e.remove()); $('noch').style.display = '';
+};
+$('rate').onchange = () => send('RATE ' + $('rate').value);
+$('scanA').onclick = async () => { for (let i = 0; i < 6; i++) await send('AR A' + i); };
+$('clearW').onclick = async () => { chans.clear(); $('chans').querySelectorAll('.ch').forEach(e => e.remove()); await resync(); };
+$('rec').onclick = () => {
+  if (!recording) { recording = []; $('rec').textContent = '■ Detener y descargar'; return; }
+  const csv = 'tiempo_ms,canal,valor\n' + recording.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = ($('profName').value || 'datos') + '.csv'; a.click();
+  recording = null; $('rec').textContent = '● Grabar CSV';
+};
+
+// digital out
+document.querySelector('[data-cmd=doOn]').onclick = () => send(`DW ${$('doPin').value} 1`);
+document.querySelector('[data-cmd=doOff]').onclick = () => send(`DW ${$('doPin').value} 0`);
+let blinkT = null, blinkS = 0;
+$('blink').onclick = () => {
+  if (blinkT) { clearInterval(blinkT); blinkT = null; $('blink').textContent = 'Parpadear'; return; }
+  blinkT = setInterval(() => send(`DW ${$('doPin').value} ${blinkS ^= 1}`), 500);
+  $('blink').textContent = 'Detener';
+};
+
+// throttle para sliders
+function throttled(fn, ms = 60) { let t = 0, last; return (...a) => { last = a; if (t) return; t = setTimeout(() => { t = 0; fn(...last); }, ms); }; }
+
+// pwm
+const pwmSend = throttled(v => send(`PWM ${$('pwmPin').value} ${v}`));
+$('pwmVal').oninput = e => { $('pwmOut').textContent = e.target.value; pwmSend(e.target.value); };
+
+// analógico
+$('anRead').onclick = () => send('AR ' + $('anPin').value);
+$('anWatch').onclick = () => watch('A', $('anPin').value);
+
+// digital in
+async function diMode() { await send(`MODE ${$('diPin').value} ${$('diPull').checked ? 'PULLUP' : 'IN'}`); }
+$('diRead').onclick = async () => { await diMode(); send('DR ' + $('diPin').value); };
+$('diWatch').onclick = async () => { await diMode(); watch('D', $('diPin').value); };
+
+// ultrasonido
+$('usRead').onclick = () => send(`US ${$('usTrig').value} ${$('usEcho').value}`);
+$('usWatch').onclick = () => watch('U', $('usTrig').value, $('usEcho').value);
+
+// servo
+const svSend = throttled(v => send(`SERVO ${$('svPin').value} ${v}`));
+function setServo(v) { $('svVal').value = v; $('svOut').textContent = v + '°'; svSend(v); }
+$('svVal').oninput = e => setServo(e.target.value);
+document.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => setServo(b.dataset.sv));
+let sweepT = null, sweepA = 0, sweepD = 5;
+$('svSweep').onclick = () => {
+  if (sweepT) { clearInterval(sweepT); sweepT = null; $('svSweep').textContent = 'Barrido'; return; }
+  sweepT = setInterval(() => { sweepA += sweepD; if (sweepA >= 180 || sweepA <= 0) sweepD = -sweepD; setServo(sweepA); }, 80);
+  $('svSweep').textContent = 'Detener';
+};
+$('svOff').onclick = () => send('SDETACH ' + $('svPin').value);
+
+// motores
+$('mSpd').oninput = e => $('mSpdOut').textContent = e.target.value;
+async function drive(a, b) {
+  const s = +$('mSpd').value, en = v => v.trim() || '-';
+  await send(`MOTOR ${$('mA1').value} ${$('mA2').value} ${en($('mAe').value)} ${a * s}`);
+  await send(`MOTOR ${$('mB1').value} ${$('mB2').value} ${en($('mBe').value)} ${b * s}`);
+}
+document.querySelectorAll('[data-drv]').forEach(b => {
+  const [a, c] = b.dataset.drv.split(',').map(Number);
+  b.onpointerdown = () => drive(a, c);
+  b.onpointerup = b.onpointerleave = () => { if ($('mHold').checked && (a || c)) drive(0, 0); };
+});
+
+// buzzer
+$('bzTone').onclick = () => send(`TONE ${$('bzPin').value} ${$('bzF').value} 500`);
+$('bzMel').onclick = async () => {
+  for (const f of [523, 587, 659, 698, 784, 880, 988, 1047]) { await send(`TONE ${$('bzPin').value} ${f} 180`); await new Promise(r => setTimeout(r, 200)); }
+};
+
+// consola
+$('send').onclick = () => { if ($('cmd').value.trim()) send($('cmd').value.trim()); $('cmd').select(); };
+$('cmd').onkeydown = e => { if (e.key === 'Enter') $('send').click(); };
+$('clrLog').onclick = () => $('log').textContent = '';
+
+// ---------- perfiles (pines guardados por proyecto) ----------
+const KEY = 'robotester-perfiles';
+function getProfiles() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
+function refreshProfiles() { $('profList').innerHTML = Object.keys(getProfiles()).map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join(''); }
+$('profSave').onclick = () => {
+  const n = $('profName').value.trim(); if (!n) return alert('Escribe el nombre del proyecto o alumno');
+  const data = {}; document.querySelectorAll('[data-save]').forEach(e => data[e.id] = e.type === 'checkbox' ? e.checked : e.value);
+  const all = getProfiles(); all[n] = data;
+  try { localStorage.setItem(KEY, JSON.stringify(all)); } catch {}
+  refreshProfiles(); log('Perfil guardado: ' + n, 'okc');
+};
+$('profLoad').onclick = () => {
+  const d = getProfiles()[$('profName').value.trim()]; if (!d) return alert('No existe ese perfil');
+  for (const [id, v] of Object.entries(d)) { const e = $(id); if (e) e.type === 'checkbox' ? e.checked = v : e.value = v; }
+  log('Perfil cargado: ' + $('profName').value, 'okc');
+};
+refreshProfiles();
+</script>
+</body>
+</html>
