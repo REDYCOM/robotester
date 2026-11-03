@@ -31,19 +31,19 @@
 #include <SoftwareSerial.h>
 
 const long BAUD = 9600;
-const uint8_t MAX_SERVOS = 4;
-const uint8_t MAX_WATCH = 8;
-const uint8_t MAX_MOTORS = 2;
+const uint8_t N_SERVOS = 4;
+const uint8_t N_WATCH = 8;
+const uint8_t N_MOTORS = 2;
 
-Servo servos[MAX_SERVOS];
-int servoPins[MAX_SERVOS];
+Servo servos[N_SERVOS];
+int servoPins[N_SERVOS];
 
 struct Watch { char type; int pin; int pin2; char label[5]; };
-Watch watches[MAX_WATCH];
+Watch watches[N_WATCH];
 uint8_t nWatch = 0;
 
 struct Motor { int in1, in2, en; unsigned long until; };
-Motor motors[MAX_MOTORS];
+Motor motors[N_MOTORS];
 uint8_t nMotors = 0;
 
 SoftwareSerial* bt = NULL;
@@ -76,9 +76,9 @@ float readUltrasonic(int trig, int echo) {
 }
 
 int servoSlot(int pin, bool create) {
-  for (uint8_t i = 0; i < MAX_SERVOS; i++) if (servoPins[i] == pin) return i;
+  for (uint8_t i = 0; i < N_SERVOS; i++) if (servoPins[i] == pin) return i;
   if (!create) return -1;
-  for (uint8_t i = 0; i < MAX_SERVOS; i++) if (servoPins[i] == -1) {
+  for (uint8_t i = 0; i < N_SERVOS; i++) if (servoPins[i] == -1) {
     servos[i].attach(pin); servoPins[i] = pin; return i;
   }
   return -1;
@@ -105,7 +105,7 @@ void setMotor(int in1, int in2, int en, int vel, unsigned long ms) {
   }
   int idx = -1;
   for (uint8_t i = 0; i < nMotors; i++) if (motors[i].in1 == in1 && motors[i].in2 == in2) idx = i;
-  if (idx < 0 && nMotors < MAX_MOTORS) { idx = nMotors++; }
+  if (idx < 0 && nMotors < N_MOTORS) { idx = nMotors++; }
   if (idx < 0) return;
   motors[idx].in1 = in1; motors[idx].in2 = in2; motors[idx].en = en;
   motors[idx].until = (ms && vel) ? millis() + ms : 0;
@@ -114,7 +114,7 @@ void setMotor(int in1, int in2, int en, int vel, unsigned long ms) {
 void stopAll() {
   nWatch = 0;
   for (uint8_t i = 0; i < nMotors; i++) motorOff(motors[i]);
-  for (uint8_t i = 0; i < MAX_SERVOS; i++)
+  for (uint8_t i = 0; i < N_SERVOS; i++)
     if (servoPins[i] != -1) { servos[i].detach(); servoPins[i] = -1; }
 }
 
@@ -161,7 +161,7 @@ void handle(char* s) {
     int wp = parsePin(a2), wp2 = parsePin(a3);
     if (wp < 0 || (t == 'U' && wp2 < 0)) return err("pin");
     for (uint8_t i = 0; i < nWatch; i++) if (watches[i].type == t && watches[i].pin == wp) return ok("WATCH");
-    if (nWatch >= MAX_WATCH) return err("lista llena");
+    if (nWatch >= N_WATCH) return err("lista llena");
     Watch& w = watches[nWatch++];
     w.type = t; w.pin = wp; w.pin2 = wp2;
     strncpy(w.label, a2, 4); w.label[4] = 0;
@@ -223,7 +223,7 @@ void handle(char* s) {
 
 void setup() {
   Serial.begin(BAUD);
-  for (uint8_t i = 0; i < MAX_SERVOS; i++) servoPins[i] = -1;
+  for (uint8_t i = 0; i < N_SERVOS; i++) servoPins[i] = -1;
   Serial.println(F("READY RoboTester v2"));
 }
 
