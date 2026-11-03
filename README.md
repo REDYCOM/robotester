@@ -12,7 +12,7 @@ Página web para que los estudiantes verifiquen las conexiones de su robot (Ardu
 5. Al terminar, volver a subir el programa del robot.
 
 Enlaces directos por proyecto: `.../#laberinto`, `.../#sumo`, `.../#seguidor`, `.../#futbolista`.
-Modo demo sin Arduino: `.../?demo#sumo`. Panel libre para el profe: `libre.html`.
+Modo demo sin Arduino: `.../?demo#sumo`. Prueba guiada paso a paso: `guiado.html`. Panel libre para el profe: `libre.html`.
 
 ## Cambiar pines o proyectos (profe)
 Editar el objeto `PROJECTS` al inicio del `<script>` en `index.html`.

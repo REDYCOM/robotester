@@ -4,208 +4,195 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RoboTester</title>
-<meta name="description" content="Verifica las conexiones de tu robot: elige tu proyecto, conecta tu Arduino y prueba cada componente.">
+<meta name="description" content="Tablero para probar los motores y sensores de tu robot Arduino.">
 <style>
 :root{
-  --bg:#f3f5f9;--card:#fff;--fg:#1b2130;--muted:#626c80;--line:#dde2ea;--soft:#eef2f8;
-  --acc:#2563eb;--acc-fg:#fff;--ok:#16803c;--ok-bg:#e7f6ec;--bad:#c62828;--bad-bg:#fdecec;
-  --warn:#9a6700;--warn-bg:#fff6dc;--in:#fff;
+  --bg:#eef2f8;--card:#fff;--fg:#17202f;--muted:#5f6b80;--line:#d9e0ea;--soft:#f1f4f9;
+  --acc:#2563eb;--ok:#16a34a;--ok-bg:#e6f7ec;--bad:#dc2626;--bad-bg:#fdecec;--warn:#b7791f;--warn-bg:#fff5db;
+  --wheel:#2b3445;--in:#fff;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1117;--card:#171b24;--fg:#e7eaf0;--muted:#98a1b3;--line:#2a313f;--soft:#1f2531;
-  --acc:#5b8cff;--acc-fg:#fff;--ok:#4ac26b;--ok-bg:#12291a;--bad:#ff6b6b;--bad-bg:#2d1517;
-  --warn:#e3b341;--warn-bg:#2b2412;--in:#0e1117;}}
-:root[data-theme="dark"]{--bg:#0e1117;--card:#171b24;--fg:#e7eaf0;--muted:#98a1b3;--line:#2a313f;--soft:#1f2531;--acc:#5b8cff;--acc-fg:#fff;--ok:#4ac26b;--ok-bg:#12291a;--bad:#ff6b6b;--bad-bg:#2d1517;--warn:#e3b341;--warn-bg:#2b2412;--in:#0e1117;}
+  --bg:#0d1118;--card:#161c26;--fg:#e8ecf3;--muted:#9aa4b6;--line:#2a3240;--soft:#1e2532;
+  --acc:#5b8cff;--ok:#4ade80;--ok-bg:#11291a;--bad:#ff6b6b;--bad-bg:#2e1517;--warn:#f0b849;--warn-bg:#2c2412;--wheel:#0b0e14;--in:#0d1118;}}
+:root[data-theme="dark"]{--bg:#0d1118;--card:#161c26;--fg:#e8ecf3;--muted:#9aa4b6;--line:#2a3240;--soft:#1e2532;--acc:#5b8cff;--ok:#4ade80;--ok-bg:#11291a;--bad:#ff6b6b;--bad-bg:#2e1517;--warn:#f0b849;--warn-bg:#2c2412;--wheel:#0b0e14;--in:#0d1118;}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--acc)}
-header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-header h1{font-size:18px;margin:0;cursor:pointer}
-.spacer{flex:1}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:4px}
-.dot.on{background:var(--ok)}
-#st{font-size:13px;color:var(--muted)}
-button{background:var(--acc);color:var(--acc-fg);border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
-button.sec{background:transparent;color:var(--fg);border:1px solid var(--line);font-weight:500}
-button.stop{background:var(--bad);color:#fff}
-button:disabled{opacity:.45;cursor:not-allowed}
-main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-h2{font-size:18px;margin:0 0 8px}
-h3{font-size:15px;margin:0 0 6px}
-.muted{color:var(--muted)}
-small{font-size:12px}
-#warn{display:none;background:var(--warn-bg);color:var(--warn);padding:10px 16px;border-bottom:1px solid var(--line)}
-/* inicio */
-.how{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0 22px}
-.how div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
-.how b{display:block;color:var(--acc);font-size:13px}
-.projects{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.proj{text-align:left;background:var(--card);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:18px;font-weight:400}
-.proj:hover{border-color:var(--acc)}
-.proj .em{font-size:40px;display:block}
-.proj b{font-size:17px;display:block;margin:6px 0 2px}
-/* prueba */
-.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);align-items:start}
-@media(max-width:860px){.grid{grid-template-columns:1fr}}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--muted);font-weight:600}
-td:last-child{font-weight:600}
-details{margin-top:12px}
-summary{cursor:pointer;color:var(--acc);font-size:14px}
-.pins{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.pins label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
-input,select{background:var(--in);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit}
-.pins input{width:64px}
-.note{background:var(--warn-bg);color:var(--fg);border-left:4px solid var(--warn);border-radius:6px;padding:8px 10px;font-size:13px;margin-top:10px}
-.step{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
-.step.run{border-color:var(--acc)}
-.sh{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
-.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--soft);font-size:15px;flex:none}
-.ok .ico{background:var(--ok-bg);color:var(--ok)}
-.fail .ico{background:var(--bad-bg);color:var(--bad)}
-.warn .ico{background:var(--warn-bg);color:var(--warn)}
-.sh .t{flex:1;min-width:0}
-.sh .t b{display:block}
-.sh .t small{color:var(--muted)}
-.sb{display:none;padding:0 14px 14px 54px}
-.step.open .sb{display:block}
-@media(max-width:560px){.sb{padding-left:14px}}
-.sb p{margin:6px 0}
-.q{margin:10px 0 4px;font-weight:600}
-.opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-.opts button{font-weight:500}
-.answer{color:var(--muted);font-size:13px;margin:2px 0 8px}
-.res{border-radius:10px;padding:10px 12px;margin-top:10px}
-.res.ok{background:var(--ok-bg)} .res.fail{background:var(--bad-bg)} .res.warn{background:var(--warn-bg)}
-.res h4{margin:0 0 4px;font-size:15px}
-.res.ok h4{color:var(--ok)} .res.fail h4{color:var(--bad)} .res.warn h4{color:var(--warn)}
-.res ul{margin:6px 0;padding:0;list-style:none}
-.res li{display:flex;gap:8px;margin:5px 0;align-items:flex-start}
-.res li input{margin-top:3px;flex:none}
-.live{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.big{font:700 34px ui-monospace,Menlo,Consolas,monospace;background:var(--soft);border-radius:10px;padding:8px 16px;min-width:120px;text-align:center}
-.chan{background:var(--soft);border-radius:10px;padding:8px 10px;text-align:center;min-width:70px;border:2px solid transparent}
-.chan.done{border-color:var(--ok)}
-.chan b{display:block;font:700 24px ui-monospace,Menlo,monospace}
-.chan small{color:var(--muted)}
-.bar{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin:6px 0}
-.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .1s linear}
-.sum{margin-top:16px}
-.sum li{margin:4px 0}
-pre#log{height:180px;overflow:auto;background:var(--in);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:8px 0 0}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation;user-select:none}
+button.sec{background:var(--soft);color:var(--fg);border:1px solid var(--line);font-weight:600}
+button.stop{background:var(--bad)}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,select{background:var(--in);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit}
 .hidden{display:none!important}
-.badge{display:inline-block;background:var(--warn-bg);color:var(--warn);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+.muted{color:var(--muted)}
+
+header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+header h1{font-size:20px;margin:0;cursor:pointer;white-space:nowrap}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:30px;padding:6px 12px;font-weight:700;font-size:14px;background:var(--bad-bg);color:var(--bad)}
+.pill.on{background:var(--ok-bg);color:var(--ok)}
+.pill i{width:10px;height:10px;border-radius:50%;background:currentColor}
+#btnCon{font-size:17px;padding:11px 20px}
+main{max-width:1200px;margin:0 auto;padding:18px 16px 60px}
+#warn{display:none;background:var(--warn-bg);color:var(--warn);padding:10px 16px;font-weight:600}
+
+/* inicio */
+.hero h2{font-size:26px;margin:4px 0}
+.projects{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:18px 0}
+.proj{background:var(--card);color:var(--fg);border:3px solid var(--line);border-radius:18px;padding:22px 16px;text-align:center;font-weight:500}
+.proj:hover{border-color:var(--acc);transform:translateY(-2px)}
+.proj .em{font-size:52px;display:block}
+.proj b{display:block;font-size:20px;margin:6px 0 2px}
+.steps{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.steps div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.steps b{display:block;font-size:13px;color:var(--acc)}
+
+/* tablero */
+.banner{border-radius:16px;padding:14px 16px;margin-bottom:14px;font-weight:600}
+.banner.bad{background:var(--bad-bg);color:var(--fg);border:2px solid var(--bad)}
+.banner.info{background:var(--card);border:2px dashed var(--line);text-align:center;padding:26px}
+.banner h3{margin:0 0 6px;font-size:19px}
+.banner.bad h3{color:var(--bad)}
+.board{display:grid;gap:14px;align-items:start;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.tile{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 16px;position:relative}
+.tile.wide{grid-column:span 2}
+.tile.full{grid-column:1/-1}
+@media(max-width:720px){.tile.wide,.tile.full{grid-column:auto}}
+.tile.ok{border-color:var(--ok)}
+.tile.bad{border-color:var(--bad)}
+.th{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.th h3{margin:0;font-size:19px;flex:1}
+.th small{color:var(--muted);font-size:12px;display:block;font-weight:500}
+.check{font-size:13px;font-weight:700;border-radius:20px;padding:3px 10px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.tile.ok .check{background:var(--ok-bg);color:var(--ok)}
+.tile.bad .check{background:var(--bad-bg);color:var(--bad)}
+.alert{background:var(--bad-bg);border-radius:12px;padding:8px 12px;margin:8px 0;font-weight:600}
+.hint{color:var(--muted);font-size:14px;margin:6px 0}
+
+details.help{margin-top:10px}
+details.help summary{cursor:pointer;font-weight:700;color:var(--bad);list-style:none;display:inline-block;padding:6px 12px;border-radius:10px;background:var(--bad-bg)}
+details.help summary::-webkit-details-marker{display:none}
+details.help h4{margin:10px 0 2px;font-size:14px}
+details.help ul{margin:4px 0;padding:0;list-style:none}
+details.help li{display:flex;gap:8px;margin:5px 0;font-size:14px;align-items:flex-start}
+details.help li input{margin-top:3px;flex:none;width:18px;height:18px}
+
+/* motores */
+.motors{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+@media(max-width:560px){.motors{grid-template-columns:1fr;justify-items:center}}
+.robot{position:relative;width:170px;height:200px}
+.robot .body{position:absolute;left:35px;top:20px;width:100px;height:160px;border-radius:22px;background:var(--acc);opacity:.18;border:3px solid var(--acc)}
+.robot .front{position:absolute;left:0;right:0;top:0;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.wheel{position:absolute;top:55px;width:30px;height:90px;border-radius:9px;background:var(--wheel);
+  background-image:repeating-linear-gradient(0deg,transparent 0 10px,rgba(255,255,255,.18) 10px 14px);}
+.wheel.l{left:0}.wheel.r{right:0}
+.wheel.fwd{animation:roll .35s linear infinite}
+.wheel.back{animation:roll .35s linear infinite reverse}
+@keyframes roll{from{background-position:0 0}to{background-position:0 -28px}}
+.wl{position:absolute;top:150px;width:44px;text-align:center;font-weight:800;font-size:13px}
+.wl.l{left:-7px}.wl.r{right:-7px}
+.arrow{position:absolute;top:16px;width:30px;text-align:center;font-size:24px;font-weight:900;color:var(--ok)}
+.arrow.l{left:0}.arrow.r{right:0}
+.pad{display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,64px);gap:8px;justify-content:center}
+.pad button{font-size:26px;padding:0;border-radius:16px}
+.pad .stp{background:var(--bad)}
+.single{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.single button{padding:8px 12px;font-size:14px}
+.spd{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-size:14px}
+.spd input{width:150px}
+
+/* distancia */
+.dist{display:flex;align-items:baseline;gap:8px}
+.dist .n{font:800 52px/1 ui-monospace,Menlo,Consolas,monospace}
+.dist .u{font-size:20px;font-weight:700;color:var(--muted)}
+.gauge{height:18px;border-radius:10px;background:var(--soft);overflow:hidden;margin:10px 0}
+.gauge i{display:block;height:100%;width:0;border-radius:10px;transition:width .15s,background .15s}
+canvas.chart{width:100%;height:130px;display:block}
+
+/* línea */
+.sq{width:150px;height:110px;border-radius:16px;border:3px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:20px;margin:6px auto;transition:background .1s}
+.sq.b{background:#111;color:#fff}.sq.w{background:#fff;color:#111}
+.sensors5{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.s5{text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.s5 .sq{width:54px;height:70px;font-size:16px;margin:4px auto}
+.s5.done{color:var(--ok)}
+
+/* servo */
+.servo svg{display:block;margin:0 auto;width:220px;height:125px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+
+/* bt */
+.msgs{background:var(--soft);border-radius:12px;min-height:90px;padding:10px;font:600 18px ui-monospace,Menlo,monospace;word-break:break-all}
+.msgs div{padding:2px 0}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+td:last-child{font-weight:700}
+.pins{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.pins label{font-size:12px;color:var(--muted);display:flex;flex-direction:column}
+.pins input{width:62px}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:8px 10px;font-size:13px;margin-top:10px}
+pre#log{height:160px;overflow:auto;background:var(--in);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px ui-monospace,Menlo,monospace;white-space:pre-wrap}
+.badge{background:var(--warn-bg);color:var(--warn);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
 </style>
 </head>
 <body>
-<div id="warn">⚠️ Este navegador no puede conectarse al Arduino. Usa <b>Google Chrome</b> o <b>Microsoft Edge</b> en una computadora (no funciona en celular).</div>
+<div id="warn">⚠️ Abre esta página en <b>Google Chrome</b> o <b>Microsoft Edge</b> en una computadora (en celular no se puede conectar el Arduino).</div>
 <header>
   <h1 id="home">🤖 RoboTester</h1>
-  <span id="projChip" class="muted"></span>
-  <span id="demoBadge" class="badge hidden">MODO DEMO (sin Arduino)</span>
+  <select id="projSel" class="hidden" title="Cambiar proyecto"></select>
+  <span id="demoBadge" class="badge hidden">DEMO</span>
   <span class="spacer"></span>
-  <span><span class="dot" id="dot"></span><span id="st">Desconectado</span></span>
-  <button id="btnCon">🔌 Conectar Arduino</button>
-  <button class="stop" id="btnStop" title="Detiene motores y pruebas">■ Parar</button>
+  <span class="pill" id="pill"><i></i><span id="st">Desconectado</span></span>
+  <button id="btnCon">🔌 Conectar</button>
+  <button class="stop" id="btnStop">■ PARAR</button>
 </header>
 
 <main>
-<!-- ============ INICIO ============ -->
+<!-- ================= INICIO ================= -->
 <section id="viewHome">
-  <h2>Verifica tu robot antes de programarlo</h2>
-  <p class="muted">Esta página prueba cada motor y sensor de tu robot y, si algo falla, te dice qué revisar.</p>
-  <div class="how">
-    <div><b>PASO 1</b>Sube el <a href="firmware/RoboTester/RoboTester.ino" download>programa de prueba</a> a tu Arduino con el Arduino IDE (solo una vez). <button class="sec" id="copyFw" style="margin-top:6px;padding:4px 10px">📋 Copiar código</button></div>
-    <div><b>PASO 2</b>Cierra el Monitor Serie del IDE y elige tu proyecto aquí abajo.</div>
-    <div><b>PASO 3</b>Pulsa <b style="display:inline;color:inherit">Conectar Arduino</b>, elige el puerto (COM…) y sigue las pruebas.</div>
-    <div><b>PASO 4</b>Cuando todo esté ✅, vuelve a subir el programa de tu robot.</div>
-  </div>
-  <h2>Elige tu proyecto</h2>
+  <div class="hero"><h2>¿Tu robot funciona? ¡Vamos a probarlo! 🚀</h2>
+  <p class="muted">Antes de empezar, sube el <a href="firmware/RoboTester/RoboTester.ino" download>programa de prueba</a> a tu Arduino (solo una vez) <button class="sec" id="copyFw" style="padding:4px 10px;font-size:13px">📋 Copiar código</button></p></div>
+  <h2 style="margin-top:20px">Elige tu robot</h2>
   <div class="projects" id="projects"></div>
-  <p class="muted" style="margin-top:22px"><small>¿Sin Arduino a mano? <a href="?demo#laberinto">Prueba el modo demo</a> · Profe: <a href="libre.html">modo libre</a></small></p>
+  <div class="steps">
+    <div><b>1</b>Sube el programa de prueba con el Arduino IDE y <b>cierra el Monitor Serie</b>.</div>
+    <div><b>2</b>Elige tu robot y pulsa <b>🔌 Conectar</b>. Elige el puerto COM.</div>
+    <div><b>3</b>¡Mueve, acerca la mano, pasa la línea! Todo se ve en vivo.</div>
+    <div><b>4</b>Cuando todo esté ✅, sube otra vez el programa de tu robot.</div>
+  </div>
+  <p class="muted" style="margin-top:20px;font-size:13px">Sin Arduino: <a href="?demo#sumo">modo demo</a> · <a href="guiado.html">prueba guiada paso a paso</a> · Profe: <a href="libre.html">modo libre</a></p>
 </section>
 
-<!-- ============ PRUEBAS ============ -->
-<section id="viewTest" class="hidden">
-  <div class="grid">
-    <div>
-      <div class="card">
-        <h2 id="projTitle"></h2>
-        <p class="muted" style="margin-top:0">Así deben estar tus conexiones:</p>
-        <table><thead><tr><th>Pieza</th><th>Cable</th><th>Va a</th></tr></thead><tbody id="wiring"></tbody></table>
-        <div id="projNotes"></div>
-        <details id="pinEdit">
-          <summary>¿Conectaste algo en otros pines? Cámbialos aquí</summary>
-          <div id="pinInputs"></div>
-          <button class="sec" id="resetPins">Volver a los pines del profe</button>
-        </details>
-      </div>
-      <div class="card sum" id="summary">
-        <h3>📋 Resultado</h3>
-        <div class="row"><input id="who" placeholder="Nombre / grupo" style="flex:1"></div>
-        <ul id="sumList" style="padding-left:18px"></ul>
-        <div class="row"><button class="sec" id="dlReport">⬇️ Descargar reporte</button><button class="sec" id="cpReport">📋 Copiar</button></div>
-      </div>
-    </div>
-    <div>
-      <div id="steps"></div>
-      <details class="card" style="margin-top:6px">
-        <summary>Consola técnica</summary>
-        <div class="row" style="margin-top:8px"><input id="cmd" style="flex:1" placeholder="Comando, ej: PING · DW 13 1 · US 2 3"><button id="send">Enviar</button></div>
-        <pre id="log"></pre>
-      </details>
-    </div>
-  </div>
+<!-- ================= TABLERO ================= -->
+<section id="viewBoard" class="hidden">
+  <div id="banners"></div>
+  <div class="board" id="board"></div>
 </section>
 </main>
 
 <script>
-/* =====================================================================
+/* ======================================================================
    CONFIGURACIÓN DE PROYECTOS  (profe: aquí cambias pines y componentes)
-   ===================================================================== */
+   ====================================================================== */
 const MOTORS_STD = { ena: '5', in1: '4', in2: '6', in3: '7', in4: '8', enb: '9' };
 const PROJECTS = {
-  laberinto: {
-    name: 'Resuelve laberintos', icon: '🧭', desc: 'Motores, ultrasonido y servo',
-    comps: [
-      { type: 'motors', pins: { ...MOTORS_STD } },
-      { type: 'servo', pins: { sig: '10' } },
-      { type: 'ultra', pins: { trig: '2', echo: '3' } },
-    ],
-    notes: ['Para tu programa: la librería <b>Servo</b> desactiva el PWM de los pines 9 y 10. Si usas <code>analogWrite</code> en ENB (pin 9), el motor B puede fallar mientras el servo esté activo. Solución: ENB a velocidad fija (<code>digitalWrite(9, HIGH)</code>) o cambia ENB al pin 11.'],
-  },
-  sumo: {
-    name: 'Sumo', icon: '🥋', desc: 'Motores, sensor de línea y ultrasonido',
-    comps: [
-      { type: 'motors', pins: { ...MOTORS_STD } },
-      { type: 'line1', pins: { out: '2' } },
-      { type: 'ultra', pins: { trig: '11', echo: '10' } },
-    ],
-  },
-  seguidor: {
-    name: 'Seguidor de línea', icon: '〰️', desc: 'Motores y sensor de 5 canales',
-    comps: [
-      { type: 'motors', pins: { ena: '3', in1: '2', in2: '4', in3: '6', in4: '7', enb: '5' } },
-      { type: 'line5', pins: { out1: '8', out2: '9', out3: '10', out4: '11', out5: '12' } },
-    ],
-  },
-  futbolista: {
-    name: 'Futbolista', icon: '⚽', desc: 'Motores y Bluetooth',
-    comps: [
-      { type: 'motors', pins: { ...MOTORS_STD } },
-      { type: 'bt', pins: { txd: '3', rxd: '2' } },
-    ],
-  },
+  laberinto: { name: 'Resuelve laberintos', icon: '🧭', desc: 'Motores · ultrasonido · servo',
+    comps: [ { type: 'motors', pins: { ...MOTORS_STD } }, { type: 'ultra', pins: { trig: '2', echo: '3' } }, { type: 'servo', pins: { sig: '10' } } ],
+    notes: ['Para tu programa: la librería <b>Servo</b> apaga el PWM de los pines 9 y 10. Si usas <code>analogWrite(9, …)</code> en ENB, el motor B puede fallar con el servo activo. Usa ENB a velocidad fija (<code>digitalWrite(9, HIGH)</code>) o cambia ENB al pin 11.'] },
+  sumo: { name: 'Sumo', icon: '🥋', desc: 'Motores · sensor de línea · ultrasonido',
+    comps: [ { type: 'motors', pins: { ...MOTORS_STD } }, { type: 'ultra', pins: { trig: '11', echo: '10' } }, { type: 'line1', pins: { out: '2' } } ] },
+  seguidor: { name: 'Seguidor de línea', icon: '〰️', desc: 'Motores · sensor de 5 canales',
+    comps: [ { type: 'motors', pins: { ena: '3', in1: '2', in2: '4', in3: '6', in4: '7', enb: '5' } }, { type: 'line5', pins: { out1: '8', out2: '9', out3: '10', out4: '11', out5: '12' } } ] },
+  futbolista: { name: 'Futbolista', icon: '⚽', desc: 'Motores · Bluetooth',
+    comps: [ { type: 'motors', pins: { ...MOTORS_STD } }, { type: 'bt', pins: { txd: '3', rxd: '2' } } ] },
 };
-const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4', enb: 'ENB', sig: 'Servo señal', trig: 'Trig', echo: 'Echo', out: 'DO línea',
-  out1: 'OUT1', out2: 'OUT2', out3: 'OUT3', out4: 'OUT4', out5: 'OUT5', txd: 'TXD módulo', rxd: 'RXD módulo' };
-const COMP_NAMES = { motors: 'Puente H y motores', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor de 5 canales', bt: 'Bluetooth' };
+const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4', enb: 'ENB', sig: 'Servo', trig: 'Trig', echo: 'Echo', out: 'DO',
+  out1: 'OUT1', out2: 'OUT2', out3: 'OUT3', out4: 'OUT4', out5: 'OUT5', txd: 'TXD', rxd: 'RXD' };
+const COMP_NAMES = { motors: 'Puente H', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor 5 canales', bt: 'Bluetooth' };
 const BAUD = 9600;
 
-/* ========================== utilidades ========================== */
+/* ============================ utilidades ============================ */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -216,63 +203,41 @@ const store = {
 };
 if (!DEMO && !('serial' in navigator)) $('warn').style.display = 'block';
 if (DEMO) $('demoBadge').classList.remove('hidden');
+function log(t) { const l = $('log'); if (!l) return; l.textContent += t + '\n'; if (l.textContent.length > 15000) l.textContent = l.textContent.slice(-10000); l.scrollTop = l.scrollHeight; }
 
-function log(t, cls) {
-  const l = $('log'); l.textContent += t + '\n';
-  if (l.textContent.length > 20000) l.textContent = l.textContent.slice(-15000);
-  l.scrollTop = l.scrollHeight;
-}
-
-/* ========================== conexión serie ========================== */
-let port, writer, reader, readDone, writeDone, connected = false, resets = 0, sim = null;
+/* ============================ conexión serie ============================ */
+let port, writer, reader, readDone, writeDone, connected = false, resets = 0, sim = null, live = false;
 const listeners = new Set();
 const onLine = fn => (listeners.add(fn), () => listeners.delete(fn));
-
 function setStatus(on, t) {
-  connected = on;
-  $('dot').classList.toggle('on', on);
-  $('st').textContent = t;
-  $('btnCon').textContent = on ? 'Desconectar' : '🔌 Conectar Arduino';
+  connected = on; $('pill').classList.toggle('on', on); $('st').textContent = t;
+  $('btnCon').textContent = on ? 'Desconectar' : '🔌 Conectar';
 }
-
 function handleLine(l) {
   if (!l) return;
   if (!/^[ADU] /.test(l)) log('< ' + l);
-  if (l.startsWith('READY')) resets++;
+  if (l.startsWith('READY')) { resets++; if (live) onReset(); }
   listeners.forEach(f => f(l));
 }
-
 async function openPort() {
   if (DEMO) { sim = makeSim(handleLine); setStatus(true, 'Conectado (demo)'); return true; }
   if (!('serial' in navigator)) { alert('Usa Google Chrome o Microsoft Edge en computadora.'); return false; }
-  try {
-    port = await navigator.serial.requestPort();
-  } catch { return false; }   // el alumno cerró la ventana sin elegir
-  try {
-    await port.open({ baudRate: BAUD });
-  } catch (e) {
-    port = null;
-    throw new Error('No se pudo abrir el puerto. ¿Está abierto el Monitor Serie del Arduino IDE u otra pestaña? Ciérralo y prueba otra vez.');
-  }
+  try { port = await navigator.serial.requestPort(); } catch { return false; }
+  try { await port.open({ baudRate: BAUD }); }
+  catch { port = null; throw new Error('busy'); }
   const enc = new TextEncoderStream(); writeDone = enc.readable.pipeTo(port.writable); writer = enc.writable.getWriter();
   const dec = new TextDecoderStream(); readDone = port.readable.pipeTo(dec.writable).catch(() => {}); reader = dec.readable.getReader();
-  setStatus(true, 'Conectado');
+  setStatus(true, 'Conectando…');
   (async () => {
     let buf = '';
-    try {
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += value;
-        let i; while ((i = buf.indexOf('\n')) >= 0) { handleLine(buf.slice(0, i).trim()); buf = buf.slice(i + 1); }
-      }
-    } catch {}
+    try { for (;;) { const { value, done } = await reader.read(); if (done) break; buf += value;
+      let i; while ((i = buf.indexOf('\n')) >= 0) { handleLine(buf.slice(0, i).trim()); buf = buf.slice(i + 1); } } } catch {}
     try { reader.releaseLock(); } catch {}
   })();
   return true;
 }
-
 async function closePort() {
+  live = false;
   if (DEMO) { sim && sim.stop(); sim = null; setStatus(false, 'Desconectado'); return; }
   try { await send('STOP'); } catch {}
   try { await reader.cancel(); await readDone; } catch {}
@@ -280,84 +245,232 @@ async function closePort() {
   try { await port.close(); } catch {}
   port = null; writer = null; setStatus(false, 'Desconectado');
 }
-
 if ('serial' in navigator) navigator.serial.addEventListener('disconnect', e => {
-  if (port && e.target === port) { port = null; writer = null; setStatus(false, '⚠️ Se desconectó el cable USB'); }
+  if (port && e.target === port) { port = null; writer = null; live = false; setStatus(false, 'Desconectado');
+    showBanner('unplug', '🔌 Se desconectó el cable USB', 'Vuelve a conectarlo y pulsa <b>🔌 Conectar</b>.'); }
 });
-
 async function send(c) {
-  if (!connected) throw new Error('El Arduino no está conectado.');
+  if (!connected) return;
   log('> ' + c);
   if (DEMO) return sim.write(c);
-  await writer.write(c + '\n');
+  try { await writer.write(c + '\n'); } catch {}
 }
-
 function request(c, match, timeout = 1500) {
   return new Promise(res => {
     const t = setTimeout(() => { off(); res(null); }, timeout);
     const off = onLine(l => { if (match(l)) { clearTimeout(t); off(); res(l); } });
-    send(c).catch(() => { clearTimeout(t); off(); res(null); });
+    send(c);
   });
 }
-const parse = l => { const p = l.split(/\s+/); return { t: p[0], pin: p[1], v: parseFloat(p[2]) }; };
+async function handshake() {
+  await new Promise(res => { const t = setTimeout(() => { off(); res(); }, 2500); const off = onLine(l => { if (l.startsWith('READY')) { clearTimeout(t); off(); res(); } }); });
+  for (let i = 0; i < 3; i++) if (await request('PING', l => l === 'PONG', 1200)) return true;
+  return false;
+}
 
-/* ========================== simulador demo ========================== */
+/* ============================ simulador (demo) ============================ */
 function makeSim(emit) {
-  let watches = [], t0 = Date.now();
-  const val = w => {
-    const t = (Date.now() - t0) / 1000;
-    if (w.t === 'U') return (30 + 26 * Math.sin(t * 1.2)).toFixed(1);
-    if (w.t === 'D') return Math.floor(t / 1.2 + +w.pin * 0.7) % 2;
-    return Math.round(512 + 400 * Math.sin(t));
-  };
+  let watches = [], t0 = Date.now(), bt = false;
+  const val = w => { const t = (Date.now() - t0) / 1000;
+    if (w.t === 'U') return (34 + 30 * Math.sin(t * 0.9)).toFixed(1);
+    if (w.t === 'D') return Math.floor(t / 1.1 + +w.pin * 0.6) % 2;
+    return Math.round(512 + 400 * Math.sin(t)); };
   const iv = setInterval(() => watches.forEach(w => emit(`${w.t} ${w.pin} ${val(w)}`)), 150);
+  const bi = setInterval(() => { if (bt) emit('B ' + 'FBLRS'[Math.floor(Math.random() * 5)]); }, 2500);
   setTimeout(() => emit('READY RoboTester v2 (demo)'), 300);
-  return {
-    stop() { clearInterval(iv); },
-    write(line) {
-      setTimeout(() => {
-        const p = line.trim().split(/\s+/), c = p[0].toUpperCase();
-        if (c === 'PING') return emit('PONG');
-        if (c === 'WATCH') { watches.push({ t: p[1], pin: p[2] }); return emit('OK WATCH'); }
-        if (c === 'STOP' || c === 'UNWATCH') { watches = []; return emit('OK ' + c); }
-        if (c === 'US') return emit(`U ${p[1]} ${val({ t: 'U' })}`);
-        if (c === 'DR') return emit(`D ${p[1]} ${val({ t: 'D', pin: p[1] })}`);
-        if (c === 'AR') return emit(`A ${p[1]} ${val({ t: 'A' })}`);
-        if (c === 'BT') { setTimeout(() => emit('B F'), 2500); return emit('OK BT'); }
-        emit('OK ' + c);
-      }, 30);
-    },
-  };
+  return { stop() { clearInterval(iv); clearInterval(bi); },
+    write(line) { setTimeout(() => {
+      const p = line.trim().split(/\s+/), c = p[0].toUpperCase();
+      if (c === 'PING') return emit('PONG');
+      if (c === 'WATCH') { watches.push({ t: p[1], pin: p[2] }); return emit('OK WATCH'); }
+      if (c === 'STOP' || c === 'UNWATCH') { watches = []; return emit('OK ' + c); }
+      if (c === 'BT') { bt = true; return emit('OK BT'); }
+      emit('OK ' + c); }, 30); } };
 }
 
-/* ========================== proyecto y cableado ========================== */
-let projKey = null, proj = null, steps = [], results = {}, running = null;
+/* ============================ consejos (ayuda) ============================ */
+function helpHTML(groups, open = false) {
+  return `<details class="help"${open ? ' open' : ''}><summary>🆘 ¿No funciona? Revisa esto</summary>` +
+    groups.map(([title, tips]) => (title ? `<h4>${title}</h4>` : '') + '<ul>' + tips.map(t => `<li><input type="checkbox"><span>${t}</span></li>`).join('') + '</ul>').join('') + '</details>';
+}
+const TIPS = {
+  conn: () => [['', [
+    'Sube el <b>programa de prueba</b> al Arduino. Si tiene otro programa, no va a responder.',
+    'Cierra el <b>Monitor Serie</b> del Arduino IDE (si está abierto, ocupa el puerto).',
+    'Elige el puerto correcto (COM3, COM4…). Desconecta el USB y mira cuál desaparece.',
+    'Usa un cable USB de datos: algunos cables solo sirven para cargar.',
+    'Si tu Arduino es clon y no aparece ningún puerto, instala el driver <b>CH340</b>.']]],
+  power: [
+    'El <b>interruptor</b> del portapilas está en ON y el LED rojo del puente H prende.',
+    'Las baterías están cargadas (el USB solo no alcanza para los motores).',
+    'Rojo (+) → interruptor → <b>12V</b> del puente H. Negro (−) → <b>GND</b> del puente H → <b>GND del Arduino</b>.',
+    'Los tornillos de la bornera aprietan el cable pelado, no el plástico.'],
+  motors: p => [
+    ['Si no gira nada', [
+      'Interruptor encendido y LED rojo del puente H prendido.',
+      `Motor A: ENA → <b>pin ${p.ena}</b>, IN1 → <b>pin ${p.in1}</b>, IN2 → <b>pin ${p.in2}</b>.`,
+      `Motor B: IN3 → <b>pin ${p.in3}</b>, IN4 → <b>pin ${p.in4}</b>, ENB → <b>pin ${p.enb}</b>.`,
+      'Si ENA/ENB van con cable al Arduino, quita el <b>jumper</b> (puentecito) de ENA/ENB.',
+      'GND del puente H unido al <b>GND del Arduino</b>.',
+      'Los cables del motor bien apretados en OUT1/OUT2 (A) y OUT3/OUT4 (B).',
+      'Toca los cables del motor directo a la batería: si así no gira, el motor está dañado.']],
+    ['Si gira solo hacia un lado', ['Revisa IN1/IN2 (motor A) o IN3/IN4 (motor B): uno de los dos cables está suelto o en otro pin. Cambia el cable dupont.']],
+    ['Si gira al revés', ['No es grave: intercambia los 2 cables del motor en la bornera del puente H.']],
+    ['Si zumba o va muy lento', ['Carga las baterías. Revisa que la rueda no roce con el chasis o un cable.']]],
+  reset: [
+    'Las baterías están bajas: cárgalas o cámbialas.',
+    'Usa al menos 7 V (por ejemplo 2 pilas 18650). 4 pilas AA normalmente no alcanzan.',
+    'Busca cables pelados que se toquen en la bornera (cortocircuito).',
+    'Revisa el cable GND entre el puente H y el Arduino.'],
+  ultra: p => [['', [
+    `Trig → <b>pin ${p.trig}</b> y Echo → <b>pin ${p.echo}</b>. ¡No los inviertas!`,
+    'VCC → <b>5V del Arduino</b> y GND → GND.',
+    'Apunta a una pared o a tu mano a menos de 1 metro.',
+    'Si marca siempre 0–3 cm, algo está tapando el sensor (un cable, el chasis).',
+    'Prueba con otro sensor: si el otro funciona, el tuyo está dañado.']]],
+  line1: p => [['', [
+    'Enciende el interruptor: este sensor usa el <b>5V del puente H</b>. ¿Prende la luz del sensor?',
+    `DO → <b>pin ${p.out}</b>. Usa la salida <b>DO</b>, no AO.`,
+    'Gira el <b>tornillito azul</b> del sensor hasta que su luz cambie entre blanco y negro.',
+    'El sensor debe quedar a 0,5–1 cm del piso.',
+    'Usa cinta negra mate. El sol directo puede confundir al sensor.']]],
+  line5: (p, bad) => [['', [
+    ...(bad && bad.length ? [`Revisa los cables de: ${bad.map(k => `<b>OUT${k.slice(3)} → pin ${p[k]}</b>`).join(', ')}.`] : []),
+    'Alimentación del sensor: <b>5V → 5V del Arduino</b> y <b>GND → GND</b>. ¿Prenden sus luces?',
+    `Pines: OUT1→${p.out1} · OUT2→${p.out2} · OUT3→${p.out3} · OUT4→${p.out4} · OUT5→${p.out5}.`,
+    'El sensor debe quedar a 0,5–1 cm del piso.',
+    'Si tiene tornillos azules, ajústalos hasta que cada luz cambie entre blanco y negro.']]],
+  servo: p => [['', [
+    `Cable <b>naranja</b> → <b>pin ${p.sig}</b>, <b>marrón</b> → GND, <b>rojo</b> → <b>5V del puente H</b>.`,
+    'Enciende el interruptor: el servo usa la energía del puente H.',
+    'El jumper <b>5V-EN</b> del puente H debe estar puesto para que salgan 5V.',
+    'Si tiembla: baterías bajas o cable de señal flojo.',
+    'Si hace ruido y no se mueve, los engranajes pueden estar dañados: prueba otro servo.']]],
+  bt: p => [['', [
+    'El LED del módulo debe parpadear. Si está apagado: VCC → <b>5V Arduino</b>, GND → <b>GND</b>.',
+    `<b>TXD del módulo → pin ${p.txd}</b> y <b>RXD del módulo → pin ${p.rxd}</b> (se cruzan: TX con RX).`,
+    'Empareja el módulo en el celular (clave <b>1234</b> o <b>0000</b>) y conéctate desde la app.',
+    'LED parpadeando rápido = no conectado. Lento o fijo = conectado.',
+    'Usa celular <b>Android</b>: los iPhone no funcionan con HC-05 / HC-06.',
+    'Elige TU módulo en la app, no el de otro grupo.']]],
+};
 
-function loadProject(key) {
-  const base = PROJECTS[key]; if (!base) return showHome();
-  projKey = key;
-  proj = JSON.parse(JSON.stringify(base));
-  const saved = store.get('rt-pins-' + key, null);
+/* ============================ proyecto ============================ */
+let projKey = null, proj = null, state = {};
+$('projects').innerHTML = Object.entries(PROJECTS).map(([k, p]) =>
+  `<button class="proj" data-k="${k}"><span class="em">${p.icon}</span><b>${esc(p.name)}</b><span class="muted">${esc(p.desc)}</span></button>`).join('');
+$('projSel').innerHTML = Object.entries(PROJECTS).map(([k, p]) => `<option value="${k}">${p.icon} ${esc(p.name)}</option>`).join('');
+document.querySelectorAll('.proj').forEach(b => b.onclick = () => location.hash = b.dataset.k);
+$('projSel').onchange = () => location.hash = $('projSel').value;
+window.addEventListener('hashchange', route);
+$('home').onclick = () => { location.hash = ''; };
+const comp = t => proj && proj.comps.find(c => c.type === t);
+
+function route() {
+  const k = location.hash.slice(1);
+  if (!PROJECTS[k]) { projKey = null; $('viewHome').classList.remove('hidden'); $('viewBoard').classList.add('hidden'); $('projSel').classList.add('hidden'); return; }
+  loadProject(k);
+}
+function loadProject(k) {
+  projKey = k; proj = JSON.parse(JSON.stringify(PROJECTS[k]));
+  const saved = store.get('rt-pins-' + k, null);
   if (saved) proj.comps.forEach((c, i) => saved[i] && Object.assign(c.pins, saved[i]));
-  results = store.get('rt-res-' + key, {});
-  $('viewHome').classList.add('hidden'); $('viewTest').classList.remove('hidden');
-  $('projTitle').textContent = base.icon + ' ' + base.name;
-  $('projChip').textContent = '· ' + base.name;
-  $('projNotes').innerHTML = (base.notes || []).map(n => `<div class="note">💡 ${n}</div>`).join('');
-  renderWiring(); renderPinInputs(); buildSteps(); renderSteps(); renderSummary();
-  window.scrollTo(0, 0);
+  $('viewHome').classList.add('hidden'); $('viewBoard').classList.remove('hidden');
+  $('projSel').classList.remove('hidden'); $('projSel').value = k;
+  renderBoard();
+  if (connected) startLive();
 }
-function showHome() {
-  projKey = null; $('viewHome').classList.remove('hidden'); $('viewTest').classList.add('hidden'); $('projChip').textContent = '';
-  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+
+/* ============================ tablero ============================ */
+const banners = {};
+function showBanner(id, title, html, tips) {
+  banners[id] = `<div class="banner bad"><h3>${title}</h3><div>${html}</div>${tips ? helpHTML(tips, true) : ''}</div>`; drawBanners();
 }
-const comp = type => proj.comps.find(c => c.type === type);
+function hideBanner(id) { delete banners[id]; drawBanners(); }
+function drawBanners() {
+  const info = !connected && projKey ? `<div class="banner info"><h3>Conecta tu Arduino para empezar</h3><p class="muted">Pulsa <b>🔌 Conectar</b> arriba y elige el puerto COM de tu Arduino.</p><button onclick="connectFlow()">🔌 Conectar</button></div>` : '';
+  $('banners').innerHTML = Object.values(banners).join('') + info;
+}
+
+function renderBoard() {
+  state = { ultra: { vals: [], near: false, far: false }, line1: { seen: new Set() }, line5: {}, bt: { msgs: [] } };
+  const tiles = [];
+  for (const c of proj.comps) {
+    const p = c.pins;
+    if (c.type === 'motors') tiles.push(`
+      <div class="tile wide" id="t-motors"><div class="th"><h3>🚗 Motores<small>Mantén presionada una flecha</small></h3><span class="check">Pruébalos</span></div>
+        <div class="motors">
+          <div class="robot"><div class="front">▲ FRENTE</div><div class="body"></div>
+            <div class="arrow l" id="arA"></div><div class="arrow r" id="arB"></div>
+            <div class="wheel l" id="wA"></div><div class="wheel r" id="wB"></div>
+            <div class="wl l">A</div><div class="wl r">B</div></div>
+          <div>
+            <div class="pad">
+              <span></span><button data-d="1,1" title="Adelante">▲</button><span></span>
+              <button data-d="-1,1" title="Izquierda">◀</button><button class="stp" data-d="0,0" title="Parar">■</button><button data-d="1,-1" title="Derecha">▶</button>
+              <span></span><button data-d="-1,-1" title="Atrás">▼</button><span></span>
+            </div>
+            <div class="single"><button class="sec" data-d="1,0">A ▲</button><button class="sec" data-d="-1,0">A ▼</button><button class="sec" data-d="0,1">B ▲</button><button class="sec" data-d="0,-1">B ▼</button></div>
+            <div class="spd">🐢 <input type="range" id="spd" min="80" max="255" value="200"> 🐇</div>
+          </div>
+        </div>
+        <p class="hint">💡 Levanta el robot para que las ruedas giren en el aire. Las ruedas del dibujo muestran cómo <b>deberían</b> girar.</p>
+        ${helpHTML([['Primero: energía', TIPS.power], ...TIPS.motors(p)])}
+      </div>`);
+    if (c.type === 'ultra') tiles.push(`
+      <div class="tile" id="t-ultra"><div class="th"><h3>📏 Distancia<small>Trig pin ${esc(p.trig)} · Echo pin ${esc(p.echo)}</small></h3><span class="check" id="ck-ultra">Acerca y aleja tu mano</span></div>
+        <div class="dist"><span class="n" id="uN">--</span><span class="u">cm</span></div>
+        <div class="gauge"><i id="uG"></i></div>
+        <canvas class="chart" id="uC"></canvas>
+        <div id="uAlert"></div>
+        ${helpHTML(TIPS.ultra(p))}
+      </div>`);
+    if (c.type === 'line1') tiles.push(`
+      <div class="tile" id="t-line1"><div class="th"><h3>⬛ Sensor de línea<small>DO pin ${esc(p.out)}</small></h3><span class="check" id="ck-line1">Pásalo por blanco y negro</span></div>
+        <div class="sq" id="l1">--</div>
+        <p class="hint" style="text-align:center">Valor: <b id="l1v">-</b> · Si no cambia, gira el tornillito azul.</p>
+        ${helpHTML(TIPS.line1(p))}
+      </div>`);
+    if (c.type === 'line5') tiles.push(`
+      <div class="tile wide" id="t-line5"><div class="th"><h3>〰️ Sensor de 5 canales<small>Mueve el robot de lado a lado sobre la línea negra</small></h3><span class="check" id="ck-line5">0 / 5 listos</span></div>
+        <div class="sensors5">${['out1', 'out2', 'out3', 'out4', 'out5'].map((k, i) => `<div class="s5" id="s5-${k}">OUT${i + 1}<div class="sq">-</div>pin ${esc(p[k])}</div>`).join('')}</div>
+        <p class="hint" style="text-align:center">Cada sensor se marca ✅ cuando ve blanco y negro.</p>
+        <div id="l5help">${helpHTML(TIPS.line5(p))}</div>
+      </div>`);
+    if (c.type === 'servo') tiles.push(`
+      <div class="tile servo" id="t-servo"><div class="th"><h3>🦾 Servo<small>Señal pin ${esc(p.sig)}</small></h3><span class="check">Muévelo</span></div>
+        <svg viewBox="0 0 220 125"><path d="M15 115 A95 95 0 0 1 205 115" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+          <line id="svN" x1="110" y1="115" x2="110" y2="30" stroke="var(--acc)" stroke-width="8" stroke-linecap="round"/><circle cx="110" cy="115" r="10" fill="var(--acc)"/>
+          <text x="8" y="124" font-size="12" fill="var(--muted)">0°</text><text x="190" y="124" font-size="12" fill="var(--muted)">180°</text></svg>
+        <div class="row" style="margin:6px 0"><input type="range" id="svR" min="0" max="180" value="90" style="width:200px"><b id="svV">90°</b></div>
+        <div class="row"><button class="sec" data-sv="0">0°</button><button class="sec" data-sv="90">90°</button><button class="sec" data-sv="180">180°</button><button id="svSweep">↔ Barrido</button></div>
+        ${helpHTML(TIPS.servo(p))}
+      </div>`);
+    if (c.type === 'bt') tiles.push(`
+      <div class="tile" id="t-bt"><div class="th"><h3>📶 Bluetooth<small>TXD → pin ${esc(p.txd)} · RXD → pin ${esc(p.rxd)}</small></h3><span class="check" id="ck-bt">Envía algo desde el celular</span></div>
+        <div class="msgs" id="btM"><span class="muted" style="font-size:14px">Empareja el celular (clave 1234 o 0000), conéctate desde tu app y presiona un botón…</span></div>
+        <div class="row" style="margin-top:8px"><input id="btT" placeholder="Mensaje al celular" style="flex:1"><button class="sec" id="btS">Enviar</button></div>
+        ${helpHTML(TIPS.bt(p))}
+      </div>`);
+  }
+  tiles.push(`
+    <div class="tile full"><details><summary style="cursor:pointer;font-weight:700;font-size:17px">🔌 Ver mis conexiones · cambiar pines</summary>
+      <table style="margin-top:8px"><tr><th>Pieza</th><th>Cable</th><th>Va a</th></tr>${wiringRows().map(r => '<tr>' + r.map(x => `<td>${esc(x)}</td>`).join('') + '</tr>').join('')}</table>
+      ${(PROJECTS[projKey].notes || []).map(n => `<div class="note">💡 ${n}</div>`).join('')}
+      <p class="hint">¿Conectaste algo en otros pines? Cámbialo aquí:</p>
+      ${proj.comps.map((c, ci) => `<div><b style="font-size:13px">${COMP_NAMES[c.type]}</b><div class="pins">${Object.entries(c.pins).map(([k, v]) => `<label>${PIN_LABELS[k] || k}<input data-ci="${ci}" data-k="${k}" value="${esc(v)}"></label>`).join('')}</div></div>`).join('')}
+      <div class="row" style="justify-content:flex-start"><button class="sec" id="pinsApply">Guardar pines</button><button class="sec" id="pinsReset">Pines del profe</button></div>
+      <details style="margin-top:12px"><summary style="cursor:pointer" class="muted">Consola técnica</summary>
+        <div class="row" style="margin-top:6px"><input id="cmd" style="flex:1" placeholder="PING · DW 13 1 · US 2 3"><button class="sec" id="cmdS">Enviar</button></div><pre id="log"></pre></details>
+    </details></div>`);
+  $('board').innerHTML = tiles.join('');
+  bindBoard(); drawBanners();
+}
 
 function wiringRows() {
   const rows = [], m = comp('motors');
   if (m) rows.push(['Motores', '2 cables c/u', 'Motor A (OUT1/OUT2) y Motor B (OUT3/OUT4)'], ['Portapilas', 'Rojo (+)', 'Interruptor → 12V'], ['Portapilas', 'Negro (−)', 'GND puente H → GND Arduino']);
-  for (const c of proj.comps) {
-    const p = c.pins;
+  for (const c of proj.comps) { const p = c.pins;
     if (c.type === 'servo') rows.push(['Servo', 'Naranja / Marrón / Rojo', `Pin ${p.sig} / GND / 5V puente H`]);
     if (c.type === 'ultra') rows.push(['Ultrasonido', 'Trig / Echo', `Pin ${p.trig} / Pin ${p.echo}`], ['Ultrasonido', 'GND / Vcc', 'GND / 5V Arduino']);
     if (c.type === 'line1') rows.push(['Sensor de línea', 'DO / GND / VCC', `Pin ${p.out} / GND / 5V puente H`]);
@@ -367,494 +480,190 @@ function wiringRows() {
   if (m) { const p = m.pins; rows.push(['Arduino', '5V', '5V puente H'], ['Puente H', 'ENA / IN1 / IN2', `Pin ${p.ena} / ${p.in1} / ${p.in2}`], ['Puente H', 'IN3 / IN4 / ENB', `Pin ${p.in3} / ${p.in4} / ${p.enb}`]); }
   return rows;
 }
-function renderWiring() { $('wiring').innerHTML = wiringRows().map(r => '<tr>' + r.map(x => `<td>${esc(x)}</td>`).join('') + '</tr>').join(''); }
 
-function renderPinInputs() {
-  $('pinInputs').innerHTML = proj.comps.map((c, ci) =>
-    `<div style="margin-top:8px"><small><b>${COMP_NAMES[c.type]}</b></small><div class="pins">` +
-    Object.entries(c.pins).map(([k, v]) => `<label>${PIN_LABELS[k] || k}<input data-ci="${ci}" data-k="${k}" value="${esc(v)}"></label>`).join('') +
-    '</div></div>').join('');
-  $('pinInputs').querySelectorAll('input').forEach(inp => inp.oninput = () => {
-    proj.comps[inp.dataset.ci].pins[inp.dataset.k] = inp.value.trim().toUpperCase();
-    store.set('rt-pins-' + projKey, proj.comps.map(c => c.pins));
-    renderWiring(); buildSteps(); renderSteps();
-  });
+function setTile(id, status, text) {
+  const t = $('t-' + id); if (!t) return;
+  t.classList.toggle('ok', status === 'ok'); t.classList.toggle('bad', status === 'bad');
+  const ck = t.querySelector('.check'); if (ck && text) ck.textContent = text;
 }
-$('resetPins').onclick = () => { store.set('rt-pins-' + projKey, null); loadProject(projKey); };
 
-/* ========================== pasos de prueba ========================== */
-function buildSteps() {
-  steps = [{ id: 'conn', icon: '🔌', title: 'Conexión con el Arduino', sub: 'USB, puerto y programa de prueba', run: testConn }];
-  const m = comp('motors');
-  if (m) {
-    const p = m.pins;
-    steps.push({ id: 'power', icon: '🔋', title: 'Alimentación del puente H', sub: 'Portapilas, interruptor y LED', run: testPower });
-    steps.push({ id: 'motA', icon: '⚙️', title: 'Motor A', sub: `ENA pin ${p.ena} · IN1 pin ${p.in1} · IN2 pin ${p.in2}`, run: ui => testMotor(ui, 'A') });
-    steps.push({ id: 'motB', icon: '⚙️', title: 'Motor B', sub: `IN3 pin ${p.in3} · IN4 pin ${p.in4} · ENB pin ${p.enb}`, run: ui => testMotor(ui, 'B') });
-    steps.push({ id: 'motAB', icon: '🚗', title: 'Los dos motores juntos', sub: 'El robot debe avanzar recto', run: testBoth });
-  }
-  for (const c of proj.comps) {
-    const p = c.pins;
-    if (c.type === 'servo') steps.push({ id: 'servo', icon: '🦾', title: 'Servo', sub: `Señal pin ${p.sig}`, run: testServo });
-    if (c.type === 'ultra') steps.push({ id: 'ultra', icon: '📏', title: 'Sensor ultrasónico', sub: `Trig pin ${p.trig} · Echo pin ${p.echo}`, run: testUltra });
-    if (c.type === 'line1') steps.push({ id: 'line1', icon: '⬛', title: 'Sensor de línea', sub: `DO pin ${p.out}`, run: testLine1 });
-    if (c.type === 'line5') steps.push({ id: 'line5', icon: '〰️', title: 'Sensor de 5 canales', sub: `OUT1–OUT5 pines ${[p.out1, p.out2, p.out3, p.out4, p.out5].join(', ')}`, run: testLine5 });
-    if (c.type === 'bt') steps.push({ id: 'bt', icon: '📶', title: 'Módulo Bluetooth', sub: `TXD → pin ${p.txd} · RXD → pin ${p.rxd}`, run: testBT });
+/* ---------- controles ---------- */
+let driveT = null, driving = [0, 0];
+function wheelUI(a, b) {
+  for (const [w, v] of [['A', a], ['B', b]]) {
+    const el = $('w' + w); if (!el) continue;
+    el.classList.toggle('fwd', v > 0); el.classList.toggle('back', v < 0);
+    $('ar' + w).textContent = v > 0 ? '▲' : v < 0 ? '▼' : '';
   }
 }
+async function drive(a, b) {
+  const m = comp('motors'); if (!m) return;
+  const p = m.pins, s = +$('spd').value, sv = comp('servo');
+  driving = [a, b]; wheelUI(a, b);
+  if (sv && (a || b)) await send(`SDETACH ${sv.pins.sig}`);   // evita choque Servo / PWM pin 9-10
+  await send(`MOTOR ${p.in1} ${p.in2} ${p.ena || '-'} ${a * s} 700`);
+  await send(`MOTOR ${p.in3} ${p.in4} ${p.enb || '-'} ${b * s} 700`);
+}
+function startDrive(a, b) {
+  if (!connected) return needConn();
+  stopDrive(false); drive(a, b);
+  if (a || b) driveT = setInterval(() => drive(a, b), 450);   // mientras se mantenga presionado
+}
+function stopDrive(sendStop = true) {
+  if (driveT) { clearInterval(driveT); driveT = null; }
+  if (sendStop && (driving[0] || driving[1])) drive(0, 0);
+  wheelUI(0, 0); driving = [0, 0];
+}
+let svDetachT = null, sweepT = null;
+function moveServo(a) {
+  const p = comp('servo').pins; a = +a;
+  $('svR').value = a; $('svV').textContent = a + '°';
+  const r = (180 - a) * Math.PI / 180;
+  $('svN').setAttribute('x2', 110 + 85 * Math.cos(r)); $('svN').setAttribute('y2', 115 - 85 * Math.sin(r));
+  if (!connected) return;
+  send(`SERVO ${p.sig} ${a}`);
+  clearTimeout(svDetachT); if (!sweepT) svDetachT = setTimeout(() => send(`SDETACH ${p.sig}`), 1500);
+}
 
-const ICONS = { ok: '✓', fail: '✕', warn: '!' };
-function renderSteps() {
-  $('steps').innerHTML = steps.map((s, i) => {
-    const r = results[s.id];
-    return `<div class="step ${r ? r.status : ''}" id="st-${s.id}">
-      <div class="sh"><span class="ico">${r ? ICONS[r.status] : i + 1}</span>
-        <span class="t"><b>${s.icon} ${esc(s.title)}</b><small>${esc(s.sub)}</small></span>
-        <button class="${r ? 'sec' : ''} go">${r ? 'Repetir' : 'Probar'}</button></div>
-      <div class="sb">${r ? resultHTML(r) : '<p class="muted">Pulsa “Probar” para empezar.</p>'}</div></div>`;
-  }).join('');
-  steps.forEach(s => {
-    const el = $('st-' + s.id);
-    el.querySelector('.go').onclick = e => { e.stopPropagation(); runStep(s.id); };
-    el.querySelector('.sh').onclick = () => { if (running !== s.id) el.classList.toggle('open'); };
+function bindBoard() {
+  document.querySelectorAll('[data-d]').forEach(b => {
+    const [a, c] = b.dataset.d.split(',').map(Number);
+    b.onpointerdown = e => { e.preventDefault(); startDrive(a, c); };
+    b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (driveT || a || c) stopDrive(); };
   });
-  bindResultButtons();
-}
-
-function resultHTML(r) {
-  const title = { ok: '✅ ', fail: '❌ ', warn: '⚠️ ' }[r.status] + esc(r.msg);
-  let h = `<div class="res ${r.status}"><h4>${title}</h4>`;
-  if (r.detail) h += `<p>${r.detail}</p>`;
-  if (r.tips && r.tips.length) h += `<b>Revisa esto, uno por uno:</b><ul>${r.tips.map(t => `<li><input type="checkbox"><span>${t}</span></li>`).join('')}</ul>`;
-  h += `<div class="row" style="margin-top:6px">${r.status !== 'ok' ? '<button class="sec again">🔁 Probar otra vez</button>' : ''}<button class="next">Siguiente prueba →</button></div></div>`;
-  return h;
-}
-function bindResultButtons() {
-  document.querySelectorAll('.step').forEach(el => {
-    const id = el.id.slice(3);
-    const a = el.querySelector('.again'), n = el.querySelector('.next');
-    if (a) a.onclick = () => runStep(id);
-    if (n) n.onclick = () => openNext(id);
-  });
-}
-function openNext(id) {
-  const i = steps.findIndex(s => s.id === id);
-  const nx = steps.slice(i + 1).find(s => !results[s.id] || results[s.id].status !== 'ok') || steps[i + 1];
-  document.querySelectorAll('.step').forEach(e => e.classList.remove('open'));
-  if (nx) { const el = $('st-' + nx.id); el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  else $('summary').scrollIntoView({ behavior: 'smooth' });
-}
-
-class Cancel extends Error {}
-function makeUI(body, token) {
-  const pend = new Set();
-  const chk = () => { if (token.cancel) throw new Cancel(); };
-  const add = html => { const d = document.createElement('div'); d.innerHTML = html; body.appendChild(d); return d; };
-  return {
-    token, add,
-    say(html) { chk(); return add(`<p>${html}</p>`); },
-    async wait(ms) { const end = Date.now() + ms; while (Date.now() < end) { chk(); await sleep(Math.min(100, end - Date.now())); } chk(); },
-    ask(q, opts) {
-      chk();
-      const d = add(`<div class="q">${q}</div><div class="opts">${opts.map((o, i) => `<button class="${i ? 'sec' : ''}" data-i="${i}">${o[1]}</button>`).join('')}</div>`);
-      return new Promise((res, rej) => {
-        const cancel = () => rej(new Cancel()); pend.add(cancel);
-        d.querySelectorAll('button').forEach(b => b.onclick = () => {
-          pend.delete(cancel); const o = opts[b.dataset.i];
-          d.querySelector('.opts').outerHTML = `<div class="answer">Respuesta: ${o[1]}</div>`;
-          res(o[0]);
-        });
-        d.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    },
-    // espera a que cond() sea verdadero, con barra de tiempo y botón para rendirse
-    waitFor(cond, ms, giveUp = 'No funciona') {
-      chk();
-      const d = add(`<div class="bar"><i></i></div><button class="sec">${giveUp}</button>`);
-      const bar = d.querySelector('i'), t0 = Date.now();
-      return new Promise((res, rej) => {
-        let done = false;
-        const fin = v => { if (done) return; done = true; clearInterval(iv); pend.delete(cancel); d.remove(); res(v); };
-        const cancel = () => { done = true; clearInterval(iv); rej(new Cancel()); }; pend.add(cancel);
-        d.querySelector('button').onclick = () => fin(false);
-        const iv = setInterval(() => {
-          const k = (Date.now() - t0) / ms; bar.style.width = Math.min(100, k * 100) + '%';
-          if (cond()) fin(true); else if (k >= 1) fin(false);
-        }, 100);
-      });
-    },
-    cancelAll() { pend.forEach(f => f()); pend.clear(); },
+  if ($('svR')) {
+    let th = 0;
+    $('svR').oninput = e => { const v = e.target.value; $('svV').textContent = v + '°'; clearTimeout(th); th = setTimeout(() => moveServo(v), 60); };
+    document.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => moveServo(b.dataset.sv));
+    $('svSweep').onclick = () => {
+      if (sweepT) { clearInterval(sweepT); sweepT = null; $('svSweep').textContent = '↔ Barrido'; moveServo(90); return; }
+      if (!connected) return needConn();
+      let a = 0, d = 10; $('svSweep').textContent = '■ Detener';
+      sweepT = setInterval(() => { a += d; if (a >= 180 || a <= 0) d = -d; moveServo(a); }, 120);
+    };
+  }
+  if ($('btS')) { const s = () => { const t = $('btT').value.trim(); if (t) { send('BTS ' + t); $('btT').value = ''; } }; $('btS').onclick = s; $('btT').onkeydown = e => e.key === 'Enter' && s(); }
+  $('pinsApply').onclick = () => {
+    document.querySelectorAll('.pins input').forEach(i => proj.comps[i.dataset.ci].pins[i.dataset.k] = i.value.trim().toUpperCase());
+    store.set('rt-pins-' + projKey, proj.comps.map(c => c.pins)); renderBoard(); if (connected) startLive();
   };
+  $('pinsReset').onclick = () => { store.set('rt-pins-' + projKey, null); loadProject(projKey); };
+  $('cmdS').onclick = () => { const c = $('cmd').value.trim(); if (c) send(c); $('cmd').select(); };
+  $('cmd').onkeydown = e => e.key === 'Enter' && $('cmdS').click();
 }
 
-let curUI = null;
-async function runStep(id) {
-  if (running) {
-    if (running === id) return;
-    if (!confirm('Hay otra prueba en curso. ¿Cancelarla?')) return;
-    cancelRun(); await sleep(150);
-  }
-  const s = steps.find(x => x.id === id);
-  const el = $('st-' + id), body = el.querySelector('.sb'), btn = el.querySelector('.go');
-  document.querySelectorAll('.step').forEach(e => e.classList.remove('open'));
-  el.classList.add('open', 'run'); el.classList.remove('ok', 'fail', 'warn');
-  el.querySelector('.ico').textContent = '…';
-  body.innerHTML = ''; btn.textContent = 'Cancelar'; btn.className = 'sec go';
-  btn.onclick = e => { e.stopPropagation(); cancelRun(); };
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  if (id !== 'conn' && !connected) {
-    const c = await runConnFirst(body); if (!c) { running = null; return renderSteps(); }
-  }
-  running = id;
-  const token = { cancel: false }, ui = makeUI(body, token); curUI = ui;
-  let r;
-  try { r = await s.run(ui); }
-  catch (e) { r = e instanceof Cancel ? null : { status: 'fail', msg: 'Error durante la prueba', detail: esc(e.message), tips: ['Revisa que el cable USB siga conectado y pulsa Conectar de nuevo.'] }; }
-  finally { if (connected) { try { await send('STOP'); } catch {} } running = null; curUI = null; }
-  if (r) { r.time = new Date().toLocaleTimeString(); results[id] = r; store.set('rt-res-' + projKey, results); }
-  renderSteps(); renderSummary();
-  const nel = $('st-' + id); nel.classList.add('open');
+/* ---------- datos en vivo ---------- */
+let offLive = null;
+async function startLive() {
+  if (offLive) offLive();
+  live = false;
+  await send('STOP'); await send('RATE 150');
+  const u = comp('ultra'), l1 = comp('line1'), l5 = comp('line5'), bt = comp('bt');
+  if (u) await send(`WATCH U ${u.pins.trig} ${u.pins.echo}`);
+  if (l1) { await send(`MODE ${l1.pins.out} IN`); await send(`WATCH D ${l1.pins.out}`); }
+  if (l5) for (const k of ['out1', 'out2', 'out3', 'out4', 'out5']) { await send(`MODE ${l5.pins[k]} IN`); await send(`WATCH D ${l5.pins[k]}`); }
+  if (bt) await send(`BT ${bt.pins.txd} ${bt.pins.rxd} 9600`);
+  offLive = onLine(onData);
+  live = true; drawBanners();
 }
-function cancelRun() { if (curUI) { curUI.token.cancel = true; curUI.cancelAll(); } if (connected) send('STOP').catch(() => {}); }
-
-async function runConnFirst(body) {
-  body.innerHTML = '<p>Primero hay que conectar el Arduino…</p>';
-  try { if (!(await openPort())) { body.innerHTML = '<p>No elegiste ningún puerto. Pulsa <b>Conectar Arduino</b> y elige el puerto (COM…).</p>'; return false; } }
-  catch (e) { body.innerHTML = `<p>${esc(e.message)}</p>`; return false; }
-  const ok = await handshake();
-  if (!ok) { results.conn = connFail(); renderSummary(); return false; }
-  results.conn = { status: 'ok', msg: 'El Arduino respondió correctamente', time: new Date().toLocaleTimeString() };
-  return true;
+function onData(l) {
+  const [t, pin, v0] = l.split(/\s+/), v = parseFloat(v0), P = String(pin || '').toUpperCase();
+  const u = comp('ultra'), l1 = comp('line1'), l5 = comp('line5');
+  if (t === 'U' && u && P === String(u.pins.trig).toUpperCase()) return ultraData(v);
+  if (t === 'D' && l1 && P === String(l1.pins.out).toUpperCase()) return line1Data(v);
+  if (t === 'D' && l5) { const k = ['out1', 'out2', 'out3', 'out4', 'out5'].find(k => String(l5.pins[k]).toUpperCase() === P); if (k) return line5Data(k, v); }
+  if (t === 'B' && comp('bt')) return btData(l.slice(2));
 }
 
-async function handshake() {
-  // el Arduino UNO se reinicia al abrir el puerto: esperamos su saludo
-  await new Promise(res => { const t = setTimeout(() => { off(); res(); }, 2500); const off = onLine(l => { if (l.startsWith('READY')) { clearTimeout(t); off(); res(); } }); });
-  for (let i = 0; i < 3; i++) {
-    const r = await request('PING', l => l === 'PONG', 1200);
-    if (r) { resets = 0; return true; }
-  }
-  return false;
-}
-
-function connFail() {
-  return { status: 'fail', msg: 'El Arduino no responde', tips: [
-    'Sube el <b>programa de prueba RoboTester</b> al Arduino (Paso 1 de la página de inicio). Si tiene otro programa, no va a responder.',
-    'Cierra el <b>Monitor Serie</b> del Arduino IDE: si está abierto, ocupa el puerto.',
-    'Elige el puerto correcto (COM3, COM4… o el que diga “USB-SERIAL CH340”). Prueba desconectando el USB para ver cuál desaparece.',
-    'Usa un cable USB de datos: algunos cables solo cargan.',
-    'Si es un Arduino clon y no aparece ningún puerto, instala el driver <b>CH340</b>.',
-  ] };
-}
-
-/* ---------- 1. conexión ---------- */
-async function testConn(ui) {
-  if (!connected) {
-    ui.say('Elige el puerto de tu Arduino en la ventana que aparece (COM…).');
-    let opened;
-    try { opened = await openPort(); } catch (e) { return { status: 'fail', msg: 'No se pudo abrir el puerto', detail: esc(e.message), tips: connFail().tips }; }
-    if (!opened) return { status: 'fail', msg: 'No se eligió ningún puerto', tips: ['Pulsa “Probar otra vez” y elige el puerto de tu Arduino.', ...connFail().tips.slice(2)] };
-  }
-  ui.say('Hablando con el Arduino…');
-  if (!(await handshake())) return connFail();
-  return { status: 'ok', msg: 'El Arduino respondió correctamente' };
-}
-
-/* ---------- 2. alimentación ---------- */
-const powerTips = () => [
-  'El <b>interruptor</b> del portapilas está en ON.',
-  'Las baterías están cargadas y bien puestas (respeta + y −).',
-  'Rojo (+) del portapilas → interruptor → borne <b>12V</b> del puente H.',
-  'Negro (−) del portapilas → <b>GND</b> del puente H, y de ese mismo GND un cable al <b>GND del Arduino</b>.',
-  'Los tornillos de la bornera están bien apretados sobre el cable pelado (no sobre el plástico).',
-  'Ningún cable pelado se toca con otro (cortocircuito).',
-];
-async function testPower(ui) {
-  ui.say('Deja el USB conectado y <b>enciende el interruptor</b> del portapilas.');
-  const a = await ui.ask('¿Se enciende el LED rojo del puente H?', [['si', 'Sí, está encendido'], ['no', 'No se enciende']]);
-  if (a === 'no') return { status: 'fail', msg: 'El puente H no recibe energía', tips: powerTips() };
-  return { status: 'ok', msg: 'El puente H está encendido' };
-}
-
-/* ---------- 3. motores ---------- */
-function motorPins(side) {
-  const p = comp('motors').pins;
-  return side === 'A' ? { in1: p.in1, in2: p.in2, en: p.ena || '-', n1: 'IN1', n2: 'IN2', ne: 'ENA', out: 'OUT1 / OUT2' }
-                      : { in1: p.in3, in2: p.in4, en: p.enb || '-', n1: 'IN3', n2: 'IN4', ne: 'ENB', out: 'OUT3 / OUT4' };
-}
-const resetResult = () => ({ status: 'fail', msg: 'El Arduino se reinició al arrancar los motores', detail: 'Cuando los motores arrancan, el voltaje cae tanto que el Arduino se apaga un instante.', tips: [
-  'Las baterías están bajas: cárgalas o cámbialas.',
-  'El portapilas debe dar al menos 7 V (por ejemplo, 2 pilas 18650). 4 pilas AA normalmente no alcanzan.',
-  'Revisa que no haya cables pelados tocándose (cortocircuito) en la bornera de los motores.',
-  'Revisa el cable GND entre el puente H y el Arduino.',
-  'Deja el USB conectado mientras pruebas.',
-] });
-function motorNoneTips(side) {
-  const m = motorPins(side);
-  return [
-    'El interruptor está encendido y el LED rojo del puente H prende. <i>El USB solo no alcanza para mover motores.</i>',
-    `${m.ne} → <b>pin ${m.en}</b>, ${m.n1} → <b>pin ${m.in1}</b>, ${m.n2} → <b>pin ${m.in2}</b>. Cuenta los pines en el Arduino: es muy fácil correrse uno.`,
-    `Si conectaste ${m.ne} con cable al Arduino, quita el <b>jumper</b> (puentecito plástico) de ${m.ne} en el puente H.`,
-    `Los 2 cables del motor están bien apretados en <b>${m.out}</b> del puente H.`,
-    '<b>GND del puente H unido al GND del Arduino</b> (tierra común). Sin esto el puente H no entiende las órdenes.',
-    'Toca los 2 cables del motor directamente a la batería: si así tampoco gira, el motor o su soldadura está dañada.',
-    'Cambia los cables dupont: a veces están rotos por dentro.',
-  ];
-}
-async function spin(ui, side, vel, ms) {
-  const m = motorPins(side);
-  await send(`MOTOR ${m.in1} ${m.in2} ${m.en} ${vel} ${ms}`);
-}
-async function testMotor(ui, side) {
-  const m = motorPins(side);
-  ui.say(`<b>Levanta el robot</b> para que las ruedas giren en el aire y enciende el interruptor. El motor ${side} girará <b>hacia adelante</b> y luego <b>hacia atrás</b>.`);
-  let vel = 200;
-  for (;;) {
-    const r0 = resets;
-    const s1 = ui.say(`➡️ Adelante (velocidad ${vel})…`);
-    await spin(ui, side, vel, 1500); await ui.wait(1700);
-    s1.innerHTML = `<p>⬅️ Atrás (velocidad ${vel})…</p>`;
-    await spin(ui, side, -vel, 1500); await ui.wait(1700);
-    s1.remove();
-    if (resets > r0) return resetResult();
-    const a = await ui.ask(`¿Qué hizo el motor ${side}?`, [
-      ['ok', '✅ Giró adelante y luego atrás'], ['inv', 'Giró al revés (primero atrás)'], ['one', 'Solo giró en un sentido'],
-      ['none', 'No giró nada'], ['weak', 'Zumbó o giró muy lento'], ['rep', '🔁 Repetir']]);
-    if (a === 'rep') continue;
-    if (a === 'ok') return { status: 'ok', msg: `El motor ${side} funciona en los dos sentidos` };
-    if (a === 'inv') return { status: 'warn', msg: `El motor ${side} funciona, pero gira al revés`, tips: [
-      `Intercambia los 2 cables del motor en la bornera ${m.out}.`, `O, en tu programa, intercambia ${m.n1} y ${m.n2}.`] };
-    if (a === 'one') return { status: 'fail', msg: `El motor ${side} solo gira en un sentido`, detail: `Eso pasa cuando ${m.n1} o ${m.n2} no llega bien al Arduino.`, tips: [
-      `${m.n1} → <b>pin ${m.in1}</b> y ${m.n2} → <b>pin ${m.in2}</b>. Revisa que estén en esos pines exactos.`,
-      'Cambia esos dos cables dupont, uno puede estar roto por dentro.',
-      'Revisa que el cable entre bien en el pin del puente H (no doblado).'] };
-    if (a === 'none') return { status: 'fail', msg: `El motor ${side} no gira`, tips: motorNoneTips(side) };
-    if (a === 'weak') {
-      if (vel < 255) { vel = 255; ui.say('Probemos a <b>velocidad máxima</b>…'); continue; }
-      return { status: 'fail', msg: `El motor ${side} no tiene fuerza`, tips: [
-        'Las baterías están bajas: cárgalas o cámbialas (el puente H L298N “se come” unos 2 V).',
-        'Revisa que la rueda no roce con el chasis ni con un cable.',
-        `${m.ne} → <b>pin ${m.en}</b>: si está mal conectado, el motor puede zumbar sin girar.`,
-        'Si solo zumba, el motor o la caja reductora pueden estar trabados: gira la rueda con la mano para ver si está dura.'] };
-    }
+function ultraData(v) {
+  const s = state.ultra; s.vals.push(v); if (s.vals.length > 80) s.vals.shift();
+  $('uN').textContent = v < 0 ? '--' : v.toFixed(1);
+  const g = $('uG'), pct = v < 0 ? 0 : Math.min(100, v);
+  g.style.width = pct + '%'; g.style.background = v < 0 ? 'transparent' : v < 15 ? 'var(--bad)' : v < 40 ? 'var(--warn)' : 'var(--ok)';
+  if (v > 1 && v < 20) s.near = true; if (v > 25) s.far = true;
+  drawChart();
+  const recent = s.vals.slice(-15);
+  if (recent.length >= 15 && recent.every(x => x < 0)) {
+    $('uAlert').innerHTML = '<div class="alert">❌ El sensor no recibe eco. Revisa Trig y Echo 👇</div>'; setTile('ultra', 'bad', 'No mide');
+    $('t-ultra').querySelector('details.help').open = true;
+  } else if (recent.length >= 15 && Math.max(...recent) - Math.min(...recent) < 0.5 && !s.far) {
+    $('uAlert').innerHTML = '<div class="alert" style="background:var(--warn-bg)">🤔 La medida no cambia. Mueve tu mano frente al sensor.</div>';
+  } else {
+    $('uAlert').innerHTML = '';
+    if (s.near && s.far) setTile('ultra', 'ok', '✅ Funciona'); else setTile('ultra', '', 'Acerca y aleja tu mano');
   }
 }
-async function testBoth(ui) {
-  ui.say('Pon el robot en el piso (o sostenlo). Las dos ruedas girarán <b>hacia adelante</b> 1,5 segundos.');
-  for (;;) {
-    const r0 = resets;
-    await spin(ui, 'A', 200, 1500); await spin(ui, 'B', 200, 1500); await ui.wait(1800);
-    if (resets > r0) return resetResult();
-    const a = await ui.ask('¿Qué hizo el robot?', [['ok', '✅ Avanzó hacia adelante'], ['one', 'Giró en círculo (una rueda va al revés)'],
-      ['back', 'Fue hacia atrás'], ['stop', 'Una rueda no giró'], ['rep', '🔁 Repetir']]);
-    if (a === 'rep') continue;
-    if (a === 'ok') return { status: 'ok', msg: 'El robot avanza con los dos motores' };
-    if (a === 'one') return { status: 'warn', msg: 'Una rueda gira al revés', tips: ['Mira cuál rueda va hacia atrás e intercambia sus 2 cables en la bornera del puente H.', 'O, en tu programa, intercambia los IN de ese motor.'] };
-    if (a === 'back') return { status: 'warn', msg: 'Las dos ruedas giran al revés', tips: ['Intercambia los cables de los dos motores en la bornera.', 'O, en tu programa, intercambia los valores de “adelante” y “atrás”.'] };
-    return { status: 'fail', msg: 'Una rueda no gira con los dos motores juntos', tips: [
-      'Repite las pruebas “Motor A” y “Motor B” por separado para saber cuál falla.',
-      'Si por separado funcionaban pero juntos no, las baterías no dan suficiente corriente: cárgalas.',
-      ...powerTips().slice(2, 4)] };
-  }
+function drawChart() {
+  const cv = $('uC'); if (!cv) return;
+  const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1;
+  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.documentElement), MAX = 100, L = 28;
+  g.font = '11px system-ui'; g.fillStyle = css.getPropertyValue('--muted'); g.strokeStyle = css.getPropertyValue('--line'); g.lineWidth = 1;
+  for (const y of [0, 25, 50, 75, 100]) { const py = h - 4 - y / MAX * (h - 12); g.beginPath(); g.moveTo(L, py); g.lineTo(w, py); g.stroke(); g.fillText(y, 2, py + 4); }
+  const vals = state.ultra.vals; g.strokeStyle = css.getPropertyValue('--acc'); g.lineWidth = 2.5; g.beginPath();
+  let pen = false;
+  vals.forEach((v, i) => { const x = L + i / 79 * (w - L); if (v < 0) { pen = false; return; }
+    const y = h - 4 - Math.min(v, MAX) / MAX * (h - 12); pen ? g.lineTo(x, y) : g.moveTo(x, y); pen = true; });
+  g.stroke();
+}
+function line1Data(v) {
+  const s = state.line1; s.seen.add(v);
+  const sq = $('l1'); sq.className = 'sq ' + (v ? 'b' : 'w'); sq.textContent = v ? 'NEGRO' : 'BLANCO'; $('l1v').textContent = v;
+  if (s.seen.size >= 2) setTile('line1', 'ok', '✅ Funciona');
+}
+function line5Data(k, v) {
+  const s = state.line5[k] || (state.line5[k] = new Set()); s.add(v);
+  const box = $('s5-' + k), sq = box.querySelector('.sq'); sq.className = 'sq ' + (v ? 'b' : 'w'); sq.textContent = s.size >= 2 ? '✓' : v;
+  box.classList.toggle('done', s.size >= 2);
+  const keys = ['out1', 'out2', 'out3', 'out4', 'out5'], done = keys.filter(x => state.line5[x] && state.line5[x].size >= 2).length;
+  setTile('line5', done === 5 ? 'ok' : '', done === 5 ? '✅ Los 5 funcionan' : `${done} / 5 listos`);
+}
+function btData(txt) {
+  const s = state.bt; s.msgs.push(txt); if (s.msgs.length > 6) s.msgs.shift();
+  $('btM').innerHTML = s.msgs.map(m => `<div>📩 ${esc(m)}</div>`).join('');
+  setTile('bt', 'ok', '✅ Recibe datos');
 }
 
-/* ---------- servo ---------- */
-async function testServo(ui) {
-  const p = comp('servo').pins;
-  ui.say('El servo irá a 0°, luego a 180° y volverá al centro (90°). <b>Enciende el interruptor</b>: el servo se alimenta del 5V del puente H.');
-  for (;;) {
-    const r0 = resets;
-    for (const a of [0, 180, 90]) { await send(`SERVO ${p.sig} ${a}`); await ui.wait(900); }
-    await send(`SDETACH ${p.sig}`);
-    if (resets > r0) return resetResult();
-    const a = await ui.ask('¿Qué hizo el servo?', [['ok', '✅ Se movió de lado a lado y quedó al centro'], ['none', 'No se movió'], ['jit', 'Tembló o se movió raro'], ['rep', '🔁 Repetir']]);
-    if (a === 'rep') continue;
-    if (a === 'ok') return { status: 'ok', msg: 'El servo funciona' };
-    if (a === 'none') return { status: 'fail', msg: 'El servo no se mueve', tips: [
-      `Cable <b>naranja</b> (señal) → <b>pin ${p.sig}</b>.`,
-      'Cable <b>marrón</b> → GND y cable <b>rojo</b> → <b>5V del puente H</b>.',
-      'El interruptor está encendido y el LED del puente H prende (el servo toma energía de ahí).',
-      'El jumper <b>5V-EN</b> del puente H (al lado de la bornera) debe estar puesto para que salgan 5V.',
-      'GND del puente H unido al GND del Arduino.',
-      'Prueba con otro servo: si el otro funciona, el tuyo está dañado.'] };
-    return { status: 'fail', msg: 'El servo se mueve mal', tips: [
-      'Las baterías están bajas: un servo sin energía suficiente tiembla.',
-      `El cable de señal (naranja) está flojo en el pin ${p.sig}.`,
-      'Si hace ruido y no llega a la posición, los engranajes pueden estar dañados: prueba otro servo.',
-      'Revisa que el GND esté bien conectado.'] };
-  }
+/* ---------- avisos automáticos ---------- */
+function onReset() {
+  stopDrive(false);
+  showBanner('reset', '⚡ ¡El Arduino se reinició!', 'Pasa cuando los motores piden más energía de la que dan las baterías.', [['', TIPS.reset]]);
+  setTile('motors', 'bad', '⚠ Se reinició');
+  setTimeout(() => startLive(), 1500);   // vuelve a activar sensores
 }
+function needConn() { showBanner('need', '🔌 Primero conecta tu Arduino', 'Pulsa <b>🔌 Conectar</b> arriba.'); setTimeout(() => hideBanner('need'), 3000); }
 
-/* ---------- ultrasonido ---------- */
-async function testUltra(ui) {
-  const p = comp('ultra').pins;
-  const pinTips = [
-    `Trig → <b>pin ${p.trig}</b> y Echo → <b>pin ${p.echo}</b>. ¡No los inviertas!`,
-    'VCC → <b>5V del Arduino</b> y GND → GND.',
-    'Los cables dupont están firmes en el sensor (a veces se salen).',
-    'Prueba con otro sensor: si el otro funciona, el tuyo está dañado.'];
-  ui.say('Apunta el sensor hacia una pared u objeto a menos de 1 metro.');
-  const vals = [];
-  for (let i = 0; i < 5; i++) {
-    const r = await request(`US ${p.trig} ${p.echo}`, l => l.startsWith('U ' + p.trig + ' '), 1200);
-    if (r) vals.push(parse(r).v);
-    await ui.wait(150);
-  }
-  if (!vals.length) return { status: 'fail', msg: 'El Arduino no contestó la medición', tips: ['Vuelve a probar la conexión (paso 1).'] };
-  if (vals.every(v => v < 0)) return { status: 'fail', msg: 'El sensor no da ninguna medida (no hay eco)', tips: [...pinTips, 'Apunta a una superficie dura y plana (pared, cuaderno) a menos de 1 metro.'] };
-
-  ui.say('¡El sensor mide! Ahora <b>acerca la mano a unos 10 cm</b> del sensor y luego <b>aléjala</b>.');
-  const live = ui.add('<div class="live"><div class="big">— cm</div></div>').querySelector('.big');
-  let near = false, far = false, last = [];
-  const off = onLine(l => {
-    if (!l.startsWith('U ')) return;
-    const v = parse(l).v; live.textContent = v < 0 ? 'sin eco' : v.toFixed(1) + ' cm';
-    last.push(v); if (last.length > 20) last.shift();
-    if (v > 1 && v < 20) near = true;
-    if (v > 25) far = true;
-  });
-  await send('RATE 120'); await send(`WATCH U ${p.trig} ${p.echo}`);
+async function connectFlow() {
+  if (connected) { await closePort(); drawBanners(); return; }
+  hideBanner('conn'); hideBanner('unplug'); hideBanner('reset');
   let ok;
-  try { ok = await ui.waitFor(() => near && far, 25000, 'No cambia la medida'); } finally { off(); await send('UNWATCH'); }
-  if (ok) return { status: 'ok', msg: 'El ultrasonido mide bien la distancia' };
-  const stuck = last.length > 3 && Math.max(...last) - Math.min(...last) < 2;
-  return { status: 'fail', msg: stuck ? 'La medida no cambia (siempre ' + last[last.length - 1] + ' cm)' : 'No detectó la mano cerca y lejos',
-    tips: [
-      'Mueve la mano de frente al sensor, despacio. Superficies blandas o inclinadas reflejan mal el sonido.',
-      'Si marca siempre algo muy pequeño (0–3 cm), hay algo tapando o pegado al sensor (un cable, el chasis).',
-      `Revisa Echo → pin ${p.echo}.`, ...pinTips.slice(1)] };
-}
-
-/* ---------- sensor de línea (1) ---------- */
-async function testLine1(ui) {
-  const p = comp('line1').pins;
-  ui.say('Enciende el interruptor (este sensor usa el 5V del puente H). Coloca el sensor a ~1 cm de altura y muévelo sobre una superficie <b>BLANCA</b> y luego sobre la línea <b>NEGRA</b>, varias veces.');
-  const live = ui.add('<div class="live"><div class="big">—</div></div>').querySelector('.big');
-  const seen = new Set(); let got = false;
-  const off = onLine(l => { if (!l.startsWith('D ' + p.out + ' ')) return; const v = parse(l).v; got = true; seen.add(v); live.textContent = v ? '1  ⬛' : '0  ⬜'; });
-  await send(`MODE ${p.out} IN`); await send('RATE 100'); await send(`WATCH D ${p.out}`);
-  let ok;
-  try { ok = await ui.waitFor(() => seen.size >= 2, 30000, 'El valor no cambia'); } finally { off(); await send('UNWATCH'); }
-  if (ok) return { status: 'ok', msg: 'El sensor distingue blanco y negro' };
-  return { status: 'fail', msg: got ? `El sensor siempre marca ${[...seen][0]}` : 'No llegan datos del sensor', tips: [
-    'Enciende el interruptor: este sensor se alimenta del <b>5V del puente H</b>. ¿Prende el LED de encendido del sensor?',
-    `DO → <b>pin ${p.out}</b>. Usa la salida <b>DO</b> (digital), no AO.`,
-    'Gira el <b>tornillito azul</b> del sensor (potenciómetro) hasta que su LED de señal se prenda en blanco y se apague en negro.',
-    'Altura: el sensor debe quedar a 0,5–1 cm de la superficie.',
-    'La línea debe ser negra mate (cinta aislante). El sol directo puede confundir al sensor.',
-    'GND del sensor conectado a GND.'] };
-}
-
-/* ---------- sensor de 5 canales ---------- */
-async function testLine5(ui) {
-  const p = comp('line5').pins, keys = ['out1', 'out2', 'out3', 'out4', 'out5'];
-  ui.say('Pasa la línea <b>NEGRA</b> por debajo de cada uno de los 5 sensores (o mueve el robot de lado a lado sobre la línea). Cada cuadro se pondrá verde cuando su sensor vea blanco y negro.');
-  const box = ui.add(`<div class="live">${keys.map((k, i) => `<div class="chan" id="ch-${k}"><small>OUT${i + 1} · pin ${esc(p[k])}</small><b>—</b></div>`).join('')}</div>`);
-  const seen = {}; keys.forEach(k => seen[k] = new Set());
-  const byPin = {}; keys.forEach(k => byPin[String(p[k]).toUpperCase()] = k);
-  const off = onLine(l => {
-    if (!l.startsWith('D ')) return;
-    const d = parse(l), k = byPin[String(d.pin).toUpperCase()]; if (!k) return;
-    seen[k].add(d.v);
-    const el = box.querySelector('#ch-' + k); el.querySelector('b').textContent = d.v;
-    if (seen[k].size >= 2) el.classList.add('done');
-  });
-  await send('RATE 120');
-  for (const k of keys) { await send(`MODE ${p[k]} IN`); await send(`WATCH D ${p[k]}`); }
-  let ok;
-  try { ok = await ui.waitFor(() => keys.every(k => seen[k].size >= 2), 45000, 'Algunos no cambian'); } finally { off(); await send('UNWATCH'); }
-  if (ok) return { status: 'ok', msg: 'Los 5 sensores detectan la línea' };
-  const bad = keys.filter(k => seen[k].size < 2);
-  const list = bad.map(k => `<b>OUT${k.slice(3)}</b> (pin ${p[k]})` + (seen[k].size ? ` siempre marca ${[...seen[k]][0]}` : ' no envía datos')).join(', ');
-  const all = bad.length === 5;
-  return { status: all ? 'fail' : 'warn', msg: all ? 'Ningún canal cambia' : `${bad.length} canal(es) no cambian`, detail: 'Falla: ' + list + '.', tips: [
-    ...(all ? ['Revisa la alimentación del sensor: <b>5V → 5V del Arduino</b> y <b>GND → GND</b>. ¿Prenden los LEDs del sensor?'] : []),
-    ...bad.map(k => `OUT${k.slice(3)} → <b>pin ${p[k]}</b>: revisa ese cable y cámbialo si hace falta.`),
-    'Altura: el sensor debe quedar a 0,5–1 cm del piso.',
-    'Si tu sensor tiene tornillos azules (potenciómetros), ajústalos hasta que el LED de cada canal cambie entre blanco y negro.',
-    'La línea debe ser negra mate y más ancha que la separación entre sensores.'] };
-}
-
-/* ---------- Bluetooth ---------- */
-async function testBT(ui) {
-  const p = comp('bt').pins;
-  const r = await request(`BT ${p.txd} ${p.rxd} 9600`, l => l.startsWith('OK BT') || l.startsWith('ERR'), 2000);
-  if (!r || r.startsWith('ERR')) return { status: 'fail', msg: 'No se pudo iniciar el Bluetooth en el Arduino', tips: ['Revisa que tengas subido el programa de prueba RoboTester v2.'] };
-  const led = await ui.ask('¿El LED del módulo Bluetooth está prendido o parpadeando?', [['si', 'Sí'], ['no', 'No, está apagado']]);
-  if (led === 'no') return { status: 'fail', msg: 'El módulo Bluetooth no tiene energía', tips: [
-    'VCC del módulo → <b>5V del Arduino</b> y GND → <b>GND</b>.', 'Los cables dupont están firmes en el módulo.', 'Prueba con otro módulo: puede estar dañado.'] };
-  ui.say('1️⃣ En tu celular <b>Android</b> activa el Bluetooth y empareja el módulo (HC-05 / HC-06, clave <b>1234</b> o <b>0000</b>).<br>2️⃣ Abre la app de control y conéctate.<br>3️⃣ Presiona cualquier botón o envía una letra.');
-  const live = ui.add('<div class="live"><div class="big" style="font-size:18px">Esperando datos…</div></div>').querySelector('.big');
-  let rx = '';
-  const off = onLine(l => { if (l.startsWith('B ')) { rx += l.slice(2) + ' '; live.textContent = '📩 ' + rx.slice(-40); } });
-  let ok;
-  try { ok = await ui.waitFor(() => rx.length > 0, 120000, 'No llega nada'); } finally { off(); }
-  if (!ok) return { status: 'fail', msg: 'No llegan datos del celular', tips: [
-    `<b>TXD del módulo → pin ${p.txd}</b> y <b>RXD del módulo → pin ${p.rxd}</b>. Se cruzan: TX con RX.`,
-    'Si el LED del módulo parpadea <b>rápido</b>, el celular aún no está conectado en la app. Conectado = parpadeo lento o fijo.',
-    'Usa un celular <b>Android</b>: los iPhone no se conectan con HC-05 / HC-06.',
-    'En la app, elige tu módulo y no el de otro grupo (cámbiale el nombre si hay varios iguales).',
-    'El módulo debe estar a 9600 baudios (es lo normal de fábrica).'] };
-  await send('BTS HOLA desde el robot');
-  const a = await ui.ask('El Arduino envió “HOLA desde el robot”. ¿Aparece en la app del celular?', [['si', '✅ Sí'], ['no', 'No aparece'], ['skip', 'Mi app no muestra mensajes']]);
-  if (a === 'no') return { status: 'warn', msg: 'El robot recibe órdenes, pero no puede enviar mensajes', detail: 'Para el futbolista basta con recibir órdenes; esto solo importa si quieres que el robot responda.', tips: [
-    `RXD del módulo → <b>pin ${p.rxd}</b>.`, 'Algunas apps solo muestran mensajes en su “terminal”: revisa ahí.'] };
-  return { status: 'ok', msg: 'El Bluetooth recibe' + (a === 'si' ? ' y envía' : '') + ' datos', detail: 'Recibido: ' + esc(rx.trim()) };
-}
-
-/* ========================== resumen ========================== */
-function renderSummary() {
-  const label = { ok: '✅', warn: '⚠️', fail: '❌' };
-  $('sumList').innerHTML = steps.map(s => {
-    const r = results[s.id];
-    return `<li>${r ? label[r.status] : '⬜'} ${esc(s.title)}${r ? ' — <span class="muted">' + esc(r.msg) + '</span>' : ''}</li>`;
-  }).join('');
-}
-function reportText() {
-  const lines = [`RoboTester · ${PROJECTS[projKey].name}`, `Alumno/grupo: ${$('who').value || '-'}`, `Fecha: ${new Date().toLocaleString()}`, ''];
-  for (const s of steps) {
-    const r = results[s.id];
-    lines.push(`${r ? { ok: '[OK]', warn: '[REVISAR]', fail: '[FALLA]' }[r.status] : '[SIN PROBAR]'} ${s.title} (${s.sub})${r ? ': ' + r.msg : ''}`);
+  try { ok = await openPort(); }
+  catch { return showBanner('conn', '❌ No se pudo abrir el puerto', 'Otro programa lo está usando.', [['', ['Cierra el <b>Monitor Serie</b> del Arduino IDE y otras pestañas de RoboTester.', 'Desconecta y vuelve a conectar el USB.']]]); }
+  if (!ok) return;
+  if (!(await handshake())) {
+    setStatus(true, 'No responde');
+    return showBanner('conn', '❌ El Arduino no responde', 'Está conectado pero no contesta.', TIPS.conn());
   }
-  lines.push('', 'Conexiones:', ...wiringRows().map(r => '  ' + r.join(' | ')));
-  return lines.join('\n');
+  resets = 0; setStatus(true, 'Conectado ✔');
+  if (projKey) startLive(); else drawBanners();
 }
-$('dlReport').onclick = () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([reportText()], { type: 'text/plain' }));
-  a.download = `robotester-${projKey}-${($('who').value || 'reporte').replace(/\s+/g, '_')}.txt`; a.click();
-};
-$('cpReport').onclick = async () => { try { await navigator.clipboard.writeText(reportText()); $('cpReport').textContent = '✔ Copiado'; setTimeout(() => $('cpReport').textContent = '📋 Copiar', 1500); } catch {} };
-$('who').value = store.get('rt-who', '');
-$('who').oninput = () => store.set('rt-who', $('who').value);
 
-/* ========================== eventos generales ========================== */
-$('projects').innerHTML = Object.entries(PROJECTS).map(([k, p]) =>
-  `<button class="proj" data-k="${k}"><span class="em">${p.icon}</span><b>${esc(p.name)}</b><span class="muted">${esc(p.desc)}</span></button>`).join('');
-document.querySelectorAll('.proj').forEach(b => b.onclick = () => { location.hash = b.dataset.k; });
-window.addEventListener('hashchange', () => { const k = location.hash.slice(1); k ? loadProject(k) : showHome(); });
-$('home').onclick = () => { location.hash = ''; showHome(); };
-
-$('btnCon').onclick = async () => {
-  if (connected) return closePort();
-  if (projKey) return runStep('conn');
-  try { if (await openPort()) setStatus(true, (await handshake()) ? 'Conectado ✔' : 'Conectado, pero el Arduino no responde'); }
-  catch (e) { alert(e.message); }
-};
-$('btnStop').onclick = () => { cancelRun(); };
-$('send').onclick = () => { const c = $('cmd').value.trim(); if (c) send(c).catch(e => log('! ' + e.message)); $('cmd').select(); };
-$('cmd').onkeydown = e => { if (e.key === 'Enter') $('send').click(); };
+$('btnCon').onclick = connectFlow;
+$('btnStop').onclick = () => { stopDrive(false); if (sweepT) $('svSweep').click(); send('STOP').then(() => projKey && connected && startLive()); };
 $('copyFw').onclick = async () => {
-  try {
-    const t = await (await fetch('firmware/RoboTester/RoboTester.ino')).text();
-    await navigator.clipboard.writeText(t);
-    $('copyFw').textContent = '✔ Copiado: pégalo en el Arduino IDE';
-  } catch { alert('No se pudo copiar. Usa el enlace “programa de prueba” para descargarlo.'); }
+  try { const t = await (await fetch('firmware/RoboTester/RoboTester.ino')).text(); await navigator.clipboard.writeText(t); $('copyFw').textContent = '✔ Copiado: pégalo en el Arduino IDE'; }
+  catch { alert('No se pudo copiar. Usa el enlace “programa de prueba”.'); }
 };
-window.addEventListener('beforeunload', () => { if (connected && !DEMO) send('STOP').catch(() => {}); });
-
-if (location.hash.length > 1) loadProject(location.hash.slice(1));
+document.addEventListener('keydown', e => {   // flechas del teclado para manejar
+  if (!comp('motors') || e.repeat || /INPUT|SELECT/.test(document.activeElement.tagName)) return;
+  const map = { ArrowUp: [1, 1], ArrowDown: [-1, -1], ArrowLeft: [-1, 1], ArrowRight: [1, -1] };
+  if (map[e.key]) { e.preventDefault(); startDrive(...map[e.key]); }
+});
+document.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') && driveT) stopDrive(); });
+window.addEventListener('blur', () => { if (driveT) stopDrive(); });
+window.addEventListener('resize', drawChart);
+route();
 </script>
 </body>
 </html>
