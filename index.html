@@ -192,7 +192,8 @@ const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4',
 const COMP_NAMES = { motors: 'Puente H', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor 5 canales', bt: 'Bluetooth' };
 const BAUD = 9600;
 const SERVO_INVERTIDO = true;  // true = el servo gira al lado contrario del dibujo (como en los robots del curso)
-const MOTOR_A_SIDE = 'der';   // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
+const MOTOR_A_SIDE = 'der';
+const GIROS_INVERTIDOS = true;  // true = intercambia ◀ y ▶ (ajustado a los robots del curso)   // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
 
 /* ============================ utilidades ============================ */
 const $ = id => document.getElementById(id);
@@ -502,6 +503,7 @@ function dirVec(d) {
   if (d === 'fwd') return [1, 1];
   if (d === 'back') return [-1, -1];
   if (d === 'stop') return [0, 0];
+  if (GIROS_INVERTIDOS) d = d === 'right' ? 'left' : 'right';
   const leftWheel = d === 'right' ? 1 : -1;   // girar a la derecha: rueda izquierda adelante, derecha atrás
   return aRight ? [-leftWheel, leftWheel] : [leftWheel, -leftWheel];
 }
