@@ -192,8 +192,8 @@ const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4',
 const COMP_NAMES = { motors: 'Puente H', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor 5 canales', bt: 'Bluetooth' };
 const BAUD = 9600;
 const SERVO_INVERTIDO = true;  // true = el servo gira al lado contrario del dibujo (como en los robots del curso)
-const MOTOR_A_SIDE = 'der';
-const GIROS_INVERTIDOS = true;  // true = intercambia ◀ y ▶ (ajustado a los robots del curso)   // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
+const MOTOR_A_SIDE = 'der';      // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
+const GIROS_INVERTIDOS = false;  // true = intercambia ◀ y ▶ sin cambiar el dibujo
 
 /* ============================ utilidades ============================ */
 const $ = id => document.getElementById(id);
@@ -397,7 +397,7 @@ function drawBanners() {
 }
 
 function renderBoard() {
-  aRight = store.get('rt-aside-' + projKey, MOTOR_A_SIDE) === 'der';
+  aRight = store.get('rt-ladoA-' + projKey, MOTOR_A_SIDE) === 'der';
   const aS = aRight ? 'r' : 'l', bS = aRight ? 'l' : 'r';
   state = { ultra: { vals: [], near: false, far: false }, line1: { seen: new Set() }, line5: {}, bt: { msgs: [] } };
   const tiles = [];
@@ -552,7 +552,7 @@ function bindBoard() {
     b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (driveT || driving[0] || driving[1]) stopDrive(); };
   });
   if ($('swapSide')) $('swapSide').onclick = () => {
-    store.set('rt-aside-' + projKey, aRight ? 'izq' : 'der'); renderBoard(); if (connected) startLive();
+    store.set('rt-ladoA-' + projKey, aRight ? 'izq' : 'der'); renderBoard(); if (connected) startLive();
   };
   if ($('svR')) {
     svInv = store.get('rt-svinv-' + projKey, SERVO_INVERTIDO);
