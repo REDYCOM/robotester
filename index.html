@@ -191,6 +191,7 @@ const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4',
   out1: 'OUT1', out2: 'OUT2', out3: 'OUT3', out4: 'OUT4', out5: 'OUT5', txd: 'TXD', rxd: 'RXD' };
 const COMP_NAMES = { motors: 'Puente H', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor 5 canales', bt: 'Bluetooth' };
 const BAUD = 9600;
+const SERVO_INVERTIDO = true;  // true = el servo gira al lado contrario del dibujo (como en los robots del curso)
 const MOTOR_A_SIDE = 'der';   // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
 
 /* ============================ utilidades ============================ */
@@ -345,6 +346,7 @@ const TIPS = {
     `Cable <b>naranja</b> → <b>pin ${p.sig}</b>, <b>marrón</b> → GND, <b>rojo</b> → <b>5V del puente H</b>.`,
     'Enciende el interruptor: el servo usa la energía del puente H.',
     'El jumper <b>5V-EN</b> del puente H debe estar puesto para que salgan 5V.',
+    'Si gira al lado contrario del dibujo, pulsa <b>🔄 Invertir giro</b> (no es una falla).',
     'Si tiembla: baterías bajas o cable de señal flojo.',
     'Si hace ruido y no se mueve, los engranajes pueden estar dañados: prueba otro servo.']]],
   bt: p => [['', [
@@ -446,8 +448,10 @@ function renderBoard() {
         <svg viewBox="0 0 220 125"><path d="M15 115 A95 95 0 0 1 205 115" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
           <line id="svN" x1="110" y1="115" x2="110" y2="30" stroke="var(--acc)" stroke-width="8" stroke-linecap="round"/><circle cx="110" cy="115" r="10" fill="var(--acc)"/>
           <text x="8" y="124" font-size="12" fill="var(--muted)">0°</text><text x="190" y="124" font-size="12" fill="var(--muted)">180°</text></svg>
-        <div class="row" style="margin:6px 0"><input type="range" id="svR" min="0" max="180" value="90" style="width:200px"><b id="svV">90°</b></div>
-        <div class="row"><button class="sec" data-sv="0">0°</button><button class="sec" data-sv="90">90°</button><button class="sec" data-sv="180">180°</button><button id="svSweep">↔ Barrido</button></div>
+        <div class="row" style="margin:6px 0"><input type="range" id="svR" min="0" max="180" value="90" style="width:200px"></div>
+        <p class="hint" style="text-align:center;margin:2px 0 8px">En tu código: <b style="font-family:ui-monospace,monospace;color:var(--fg)">servo.write(<span id="svV">90</span>);</b></p>
+        <div class="row"><button class="sec" data-sv="0">◀ Izquierda</button><button class="sec" data-sv="90">Centro</button><button class="sec" data-sv="180">Derecha ▶</button><button id="svSweep">↔ Barrido</button></div>
+        <div class="row" style="margin-top:8px"><button class="sec" id="svInv" style="font-size:14px">🔄 Invertir giro</button></div>
         ${helpHTML(TIPS.servo(p))}
       </div>`);
     if (c.type === 'bt') tiles.push(`
@@ -527,13 +531,15 @@ function stopDrive(sendStop = true) {
   wheelUI(0, 0); driving = [0, 0];
 }
 let svDetachT = null, sweepT = null;
+let svInv = true;
+const servoReal = pos => svInv ? 180 - pos : pos;   // pos = lo que muestra el dibujo (0 izquierda, 180 derecha)
 function moveServo(a) {
   const p = comp('servo').pins; a = +a;
-  $('svR').value = a; $('svV').textContent = a + '°';
+  $('svR').value = a; $('svV').textContent = servoReal(a);
   const r = (180 - a) * Math.PI / 180;
   $('svN').setAttribute('x2', 110 + 85 * Math.cos(r)); $('svN').setAttribute('y2', 115 - 85 * Math.sin(r));
   if (!connected) return;
-  send(`SERVO ${p.sig} ${a}`);
+  send(`SERVO ${p.sig} ${servoReal(a)}`);
   clearTimeout(svDetachT); if (!sweepT) svDetachT = setTimeout(() => send(`SDETACH ${p.sig}`), 1500);
 }
 
@@ -547,8 +553,11 @@ function bindBoard() {
     store.set('rt-aside-' + projKey, aRight ? 'izq' : 'der'); renderBoard(); if (connected) startLive();
   };
   if ($('svR')) {
+    svInv = store.get('rt-svinv-' + projKey, SERVO_INVERTIDO);
+    $('svV').textContent = servoReal(+$('svR').value);
+    $('svInv').onclick = () => { svInv = !svInv; store.set('rt-svinv-' + projKey, svInv); moveServo($('svR').value); };
     let th = 0;
-    $('svR').oninput = e => { const v = e.target.value; $('svV').textContent = v + '°'; clearTimeout(th); th = setTimeout(() => moveServo(v), 60); };
+    $('svR').oninput = e => { const v = e.target.value; $('svV').textContent = servoReal(v); clearTimeout(th); th = setTimeout(() => moveServo(v), 60); };
     document.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => moveServo(b.dataset.sv));
     $('svSweep').onclick = () => {
       if (sweepT) { clearInterval(sweepT); sweepT = null; $('svSweep').textContent = '↔ Barrido'; moveServo(90); return; }
