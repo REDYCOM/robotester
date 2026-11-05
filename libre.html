@@ -128,12 +128,12 @@ pre#log{height:220px;overflow:auto;background:var(--in);border:1px solid var(--l
   <!-- MOTORES -->
   <section class="card">
     <h2>⚙️ Motores DC (L298N / L293D / TB6612)</h2><p class="d">EN = “-” si el jumper ENA/ENB está puesto</p>
-    <div class="row"><b style="width:20px">A</b><label>IN1</label><input class="pin" id="mA1" value="4" data-save><label>IN2</label><input class="pin" id="mA2" value="5" data-save><label>EN</label><input class="pin" id="mAe" value="3" data-save></div>
+    <div class="row"><b style="width:20px" title="rueda derecha">A</b><label>IN1</label><input class="pin" id="mA1" value="4" data-save><label>IN2</label><input class="pin" id="mA2" value="5" data-save><label>EN</label><input class="pin" id="mAe" value="3" data-save></div>
     <div class="row"><b style="width:20px">B</b><label>IN3</label><input class="pin" id="mB1" value="12" data-save><label>IN4</label><input class="pin" id="mB2" value="13" data-save><label>EN</label><input class="pin" id="mBe" value="11" data-save></div>
     <div class="row"><label>Velocidad</label><input type="range" id="mSpd" min="60" max="255" value="180"><span id="mSpdOut">180</span></div>
     <div class="pad">
       <span></span><button data-drv="1,1">▲ Avanzar</button><span></span>
-      <button data-drv="-1,1">◀ Izq</button><button class="stop" data-drv="0,0">■</button><button data-drv="1,-1">Der ▶</button>
+      <button data-drv="1,-1">◀ Izq</button><button class="stop" data-drv="0,0">■</button><button data-drv="-1,1">Der ▶</button>
       <span></span><button data-drv="-1,-1">▼ Atrás</button><span></span>
     </div>
     <div class="row"><button class="sec" data-drv="1,0">Solo A</button><button class="sec" data-drv="0,1">Solo B</button>

@@ -191,6 +191,7 @@ const PIN_LABELS = { ena: 'ENA', in1: 'IN1', in2: 'IN2', in3: 'IN3', in4: 'IN4',
   out1: 'OUT1', out2: 'OUT2', out3: 'OUT3', out4: 'OUT4', out5: 'OUT5', txd: 'TXD', rxd: 'RXD' };
 const COMP_NAMES = { motors: 'Puente H', servo: 'Servo', ultra: 'Ultrasonido', line1: 'Sensor de línea', line5: 'Sensor 5 canales', bt: 'Bluetooth' };
 const BAUD = 9600;
+const MOTOR_A_SIDE = 'der';   // lado del motor A (ENA/IN1/IN2) en los robots del curso: 'der' o 'izq'
 
 /* ============================ utilidades ============================ */
 const $ = id => document.getElementById(id);
@@ -393,6 +394,8 @@ function drawBanners() {
 }
 
 function renderBoard() {
+  aRight = store.get('rt-aside-' + projKey, MOTOR_A_SIDE) === 'der';
+  const aS = aRight ? 'r' : 'l', bS = aRight ? 'l' : 'r';
   state = { ultra: { vals: [], near: false, far: false }, line1: { seen: new Set() }, line5: {}, bt: { msgs: [] } };
   const tiles = [];
   for (const c of proj.comps) {
@@ -401,21 +404,22 @@ function renderBoard() {
       <div class="tile wide" id="t-motors"><div class="th"><h3>🚗 Motores<small>Mantén presionada una flecha</small></h3><span class="check">Pruébalos</span></div>
         <div class="motors">
           <div class="robot"><div class="front">▲ FRENTE</div><div class="body"></div>
-            <div class="arrow l" id="arA"></div><div class="arrow r" id="arB"></div>
-            <div class="wheel l" id="wA"></div><div class="wheel r" id="wB"></div>
-            <div class="wl l">A</div><div class="wl r">B</div></div>
+            <div class="arrow ${aS}" id="arA"></div><div class="arrow ${bS}" id="arB"></div>
+            <div class="wheel ${aS}" id="wA"></div><div class="wheel ${bS}" id="wB"></div>
+            <div class="wl ${aS}">A</div><div class="wl ${bS}">B</div></div>
           <div>
             <div class="pad">
-              <span></span><button data-d="1,1" title="Adelante">▲</button><span></span>
-              <button data-d="-1,1" title="Izquierda">◀</button><button class="stp" data-d="0,0" title="Parar">■</button><button data-d="1,-1" title="Derecha">▶</button>
-              <span></span><button data-d="-1,-1" title="Atrás">▼</button><span></span>
+              <span></span><button data-dir="fwd" title="Adelante">▲</button><span></span>
+              <button data-dir="left" title="Izquierda">◀</button><button class="stp" data-dir="stop" title="Parar">■</button><button data-dir="right" title="Derecha">▶</button>
+              <span></span><button data-dir="back" title="Atrás">▼</button><span></span>
             </div>
             <div class="single"><button class="sec" data-d="1,0">A ▲</button><button class="sec" data-d="-1,0">A ▼</button><button class="sec" data-d="0,1">B ▲</button><button class="sec" data-d="0,-1">B ▼</button></div>
             <div class="spd">🐢 <input type="range" id="spd" min="80" max="255" value="200"> 🐇</div>
+            <div class="single"><button class="sec" id="swapSide">🔄 Cambiar lados (motor A a la ${aRight ? 'izquierda' : 'derecha'})</button></div>
           </div>
         </div>
         <p class="hint">💡 Levanta el robot para que las ruedas giren en el aire. Las ruedas del dibujo muestran cómo <b>deberían</b> girar.</p>
-        ${helpHTML([['Primero: energía', TIPS.power], ...TIPS.motors(p)])}
+        ${helpHTML([['Primero: energía', TIPS.power], ['Si aprietas ▶ y el robot gira a la izquierda (o al revés)', ['Tu motor A está del otro lado. Pulsa <b>🔄 Cambiar lados</b>: no hay que tocar cables.']], ...TIPS.motors(p)])}
       </div>`);
     if (c.type === 'ultra') tiles.push(`
       <div class="tile" id="t-ultra"><div class="th"><h3>📏 Distancia<small>Trig pin ${esc(p.trig)} · Echo pin ${esc(p.echo)}</small></h3><span class="check" id="ck-ultra">Acerca y aleja tu mano</span></div>
@@ -488,7 +492,15 @@ function setTile(id, status, text) {
 }
 
 /* ---------- controles ---------- */
-let driveT = null, driving = [0, 0];
+let driveT = null, driving = [0, 0], aRight = true;
+// dirección → [motor A, motor B] según en qué lado está el motor A
+function dirVec(d) {
+  if (d === 'fwd') return [1, 1];
+  if (d === 'back') return [-1, -1];
+  if (d === 'stop') return [0, 0];
+  const leftWheel = d === 'right' ? 1 : -1;   // girar a la derecha: rueda izquierda adelante, derecha atrás
+  return aRight ? [-leftWheel, leftWheel] : [leftWheel, -leftWheel];
+}
 function wheelUI(a, b) {
   for (const [w, v] of [['A', a], ['B', b]]) {
     const el = $('w' + w); if (!el) continue;
@@ -526,11 +538,14 @@ function moveServo(a) {
 }
 
 function bindBoard() {
-  document.querySelectorAll('[data-d]').forEach(b => {
-    const [a, c] = b.dataset.d.split(',').map(Number);
-    b.onpointerdown = e => { e.preventDefault(); startDrive(a, c); };
-    b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (driveT || a || c) stopDrive(); };
+  document.querySelectorAll('[data-d],[data-dir]').forEach(b => {
+    const vec = () => b.dataset.dir ? dirVec(b.dataset.dir) : b.dataset.d.split(',').map(Number);
+    b.onpointerdown = e => { e.preventDefault(); startDrive(...vec()); };
+    b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (driveT || driving[0] || driving[1]) stopDrive(); };
   });
+  if ($('swapSide')) $('swapSide').onclick = () => {
+    store.set('rt-aside-' + projKey, aRight ? 'izq' : 'der'); renderBoard(); if (connected) startLive();
+  };
   if ($('svR')) {
     let th = 0;
     $('svR').oninput = e => { const v = e.target.value; $('svV').textContent = v + '°'; clearTimeout(th); th = setTimeout(() => moveServo(v), 60); };
@@ -657,8 +672,8 @@ $('copyFw').onclick = async () => {
 };
 document.addEventListener('keydown', e => {   // flechas del teclado para manejar
   if (!comp('motors') || e.repeat || /INPUT|SELECT/.test(document.activeElement.tagName)) return;
-  const map = { ArrowUp: [1, 1], ArrowDown: [-1, -1], ArrowLeft: [-1, 1], ArrowRight: [1, -1] };
-  if (map[e.key]) { e.preventDefault(); startDrive(...map[e.key]); }
+  const map = { ArrowUp: 'fwd', ArrowDown: 'back', ArrowLeft: 'left', ArrowRight: 'right' };
+  if (map[e.key]) { e.preventDefault(); startDrive(...dirVec(map[e.key])); }
 });
 document.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') && driveT) stopDrive(); });
 window.addEventListener('blur', () => { if (driveT) stopDrive(); });
